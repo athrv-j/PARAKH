@@ -1,0 +1,32 @@
+:root {
+  --color-ink: #101114;
+  --color-paper: #F4EFE6;
+  --color-paper-light: #FAF7F2;
+  --color-stamp-red: #D7263D;
+  --color-highlighter: #FFD60A;
+  --color-verified-green: #2FBF71;
+  --color-steel: #8A8F98;
+  --color-steel-light: #E2E4E8;
+  --color-docket-border: #D8D2C6;
+
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'Space Mono', monospace;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --shadow-card: 0 4px 12px rgba(16, 17, 20, 0.08);
+  --shadow-lift: 0 10px 24px rgba(16, 17, 20, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-ink);
+  color: var(--color-ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}

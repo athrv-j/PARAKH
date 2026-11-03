@@ -1,0 +1,714 @@
+[
+  {
+    "draft_id": "DRAFT-VIOLATION-01",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-01",
+        "snippet": "miracle cure",
+        "explanation": "Banned term used. Must use scientifically studied terminology."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-03",
+        "snippet": "cheap tests",
+        "explanation": "Banned slang used instead of affordable preventive checkups."
+      },
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.2",
+        "snippet": "BUY NOW OR REGRET MISSING OUT ON COMPLETE HEALTH IMMUNITY!!!",
+        "explanation": "Excessive sales hyperbole and triple exclamation marks violate tone clause C-1.2."
+      },
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-01",
+        "snippet": "Only ₹199 for full body scan",
+        "explanation": "Fact mismatch: Basic health checkup price is ₹499, not ₹199."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-02",
+    "client_id": "client_kavach",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.1",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY!",
+        "explanation": "Alarmist, fear-mongering copy violates calm and evidence-backed tone."
+      },
+      {
+        "type": "accessibility",
+        "clause_or_fact_id": "C-5.3",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY! IF YOU DONT TEST TODAY YOUR FAMILY WILL SUFFER SEVERE INFECTION!",
+        "explanation": "All-caps block exceeding 15 words impairs accessibility."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-03",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-02",
+        "snippet": "Offer valid until December 2026",
+        "explanation": "Diwali Wellness Camp offer expires on 2026-11-05."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-04",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "unsupported_claim",
+        "clause_or_fact_id": "C-3.3",
+        "snippet": "India’s No. 1 Best Diagnostic Company, better than all private hospitals combined",
+        "explanation": "Comparative superiority claim made without verified regulatory substantiation."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-05",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-01",
+        "snippet": "instant cash no kyc",
+        "explanation": "Banned term used. Must use streamlined digital KYC verification."
+      },
+      {
+        "type": "claims",
+        "clause_or_fact_id": "C-2.1",
+        "snippet": "100% guaranteed approval",
+        "explanation": "Absolute outcome claim violates regulatory rules."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-06",
+    "client_id": "client_vyapar",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-03",
+        "snippet": "cheap pos",
+        "explanation": "Banned slang term used. Preferred term is cost-effective digital billing terminal."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-07",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-VYA-11",
+        "snippet": "₹5,000 cash prize instantly on any loan amount",
+        "explanation": "Fact mismatch: Approved cashback is ₹2,500 on ₹10L+ credit only."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-08",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-01",
+        "snippet": "chemical-free",
+        "explanation": "Banned term used. All matter contains chemicals; use botanical extracts."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-02",
+        "snippet": "fair skin",
+        "explanation": "Discriminatory terminology banned under brand guidelines."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-03",
+        "snippet": "instant whitening",
+        "explanation": "Prohibited clinical hyperbole; use natural brightening glow."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-09",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-MIT-02",
+        "snippet": "₹1,200 available until Christmas 2026",
+        "explanation": "Price is ₹1,499 and promo expires on 2026-11-12."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-10",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-01",
+        "snippet": "miracle cure",
+        "explanation": "Banned term used. Must use scientifically studied terminology."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-03",
+        "snippet": "cheap tests",
+        "explanation": "Banned slang used instead of affordable preventive checkups."
+      },
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.2",
+        "snippet": "BUY NOW OR REGRET MISSING OUT ON COMPLETE HEALTH IMMUNITY!!!",
+        "explanation": "Excessive sales hyperbole and triple exclamation marks violate tone clause C-1.2."
+      },
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-01",
+        "snippet": "Only ₹199 for full body scan",
+        "explanation": "Fact mismatch: Basic health checkup price is ₹499, not ₹199."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-11",
+    "client_id": "client_kavach",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.1",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY!",
+        "explanation": "Alarmist, fear-mongering copy violates calm and evidence-backed tone."
+      },
+      {
+        "type": "accessibility",
+        "clause_or_fact_id": "C-5.3",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY! IF YOU DONT TEST TODAY YOUR FAMILY WILL SUFFER SEVERE INFECTION!",
+        "explanation": "All-caps block exceeding 15 words impairs accessibility."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-12",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-02",
+        "snippet": "Offer valid until December 2026",
+        "explanation": "Diwali Wellness Camp offer expires on 2026-11-05."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-13",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "unsupported_claim",
+        "clause_or_fact_id": "C-3.3",
+        "snippet": "India’s No. 1 Best Diagnostic Company, better than all private hospitals combined",
+        "explanation": "Comparative superiority claim made without verified regulatory substantiation."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-14",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-01",
+        "snippet": "instant cash no kyc",
+        "explanation": "Banned term used. Must use streamlined digital KYC verification."
+      },
+      {
+        "type": "claims",
+        "clause_or_fact_id": "C-2.1",
+        "snippet": "100% guaranteed approval",
+        "explanation": "Absolute outcome claim violates regulatory rules."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-15",
+    "client_id": "client_vyapar",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-03",
+        "snippet": "cheap pos",
+        "explanation": "Banned slang term used. Preferred term is cost-effective digital billing terminal."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-16",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-VYA-11",
+        "snippet": "₹5,000 cash prize instantly on any loan amount",
+        "explanation": "Fact mismatch: Approved cashback is ₹2,500 on ₹10L+ credit only."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-17",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-01",
+        "snippet": "chemical-free",
+        "explanation": "Banned term used. All matter contains chemicals; use botanical extracts."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-02",
+        "snippet": "fair skin",
+        "explanation": "Discriminatory terminology banned under brand guidelines."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-03",
+        "snippet": "instant whitening",
+        "explanation": "Prohibited clinical hyperbole; use natural brightening glow."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-18",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-MIT-02",
+        "snippet": "₹1,200 available until Christmas 2026",
+        "explanation": "Price is ₹1,499 and promo expires on 2026-11-12."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-19",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-01",
+        "snippet": "miracle cure",
+        "explanation": "Banned term used. Must use scientifically studied terminology."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-03",
+        "snippet": "cheap tests",
+        "explanation": "Banned slang used instead of affordable preventive checkups."
+      },
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.2",
+        "snippet": "BUY NOW OR REGRET MISSING OUT ON COMPLETE HEALTH IMMUNITY!!!",
+        "explanation": "Excessive sales hyperbole and triple exclamation marks violate tone clause C-1.2."
+      },
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-01",
+        "snippet": "Only ₹199 for full body scan",
+        "explanation": "Fact mismatch: Basic health checkup price is ₹499, not ₹199."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-20",
+    "client_id": "client_kavach",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.1",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY!",
+        "explanation": "Alarmist, fear-mongering copy violates calm and evidence-backed tone."
+      },
+      {
+        "type": "accessibility",
+        "clause_or_fact_id": "C-5.3",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY! IF YOU DONT TEST TODAY YOUR FAMILY WILL SUFFER SEVERE INFECTION!",
+        "explanation": "All-caps block exceeding 15 words impairs accessibility."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-21",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-02",
+        "snippet": "Offer valid until December 2026",
+        "explanation": "Diwali Wellness Camp offer expires on 2026-11-05."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-22",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "unsupported_claim",
+        "clause_or_fact_id": "C-3.3",
+        "snippet": "India’s No. 1 Best Diagnostic Company, better than all private hospitals combined",
+        "explanation": "Comparative superiority claim made without verified regulatory substantiation."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-23",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-01",
+        "snippet": "instant cash no kyc",
+        "explanation": "Banned term used. Must use streamlined digital KYC verification."
+      },
+      {
+        "type": "claims",
+        "clause_or_fact_id": "C-2.1",
+        "snippet": "100% guaranteed approval",
+        "explanation": "Absolute outcome claim violates regulatory rules."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-24",
+    "client_id": "client_vyapar",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-03",
+        "snippet": "cheap pos",
+        "explanation": "Banned slang term used. Preferred term is cost-effective digital billing terminal."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-25",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-VYA-11",
+        "snippet": "₹5,000 cash prize instantly on any loan amount",
+        "explanation": "Fact mismatch: Approved cashback is ₹2,500 on ₹10L+ credit only."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-26",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-01",
+        "snippet": "chemical-free",
+        "explanation": "Banned term used. All matter contains chemicals; use botanical extracts."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-02",
+        "snippet": "fair skin",
+        "explanation": "Discriminatory terminology banned under brand guidelines."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-03",
+        "snippet": "instant whitening",
+        "explanation": "Prohibited clinical hyperbole; use natural brightening glow."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-27",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-MIT-02",
+        "snippet": "₹1,200 available until Christmas 2026",
+        "explanation": "Price is ₹1,499 and promo expires on 2026-11-12."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-28",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-01",
+        "snippet": "miracle cure",
+        "explanation": "Banned term used. Must use scientifically studied terminology."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-03",
+        "snippet": "cheap tests",
+        "explanation": "Banned slang used instead of affordable preventive checkups."
+      },
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.2",
+        "snippet": "BUY NOW OR REGRET MISSING OUT ON COMPLETE HEALTH IMMUNITY!!!",
+        "explanation": "Excessive sales hyperbole and triple exclamation marks violate tone clause C-1.2."
+      },
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-01",
+        "snippet": "Only ₹199 for full body scan",
+        "explanation": "Fact mismatch: Basic health checkup price is ₹499, not ₹199."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-29",
+    "client_id": "client_kavach",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.1",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY!",
+        "explanation": "Alarmist, fear-mongering copy violates calm and evidence-backed tone."
+      },
+      {
+        "type": "accessibility",
+        "clause_or_fact_id": "C-5.3",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY! IF YOU DONT TEST TODAY YOUR FAMILY WILL SUFFER SEVERE INFECTION!",
+        "explanation": "All-caps block exceeding 15 words impairs accessibility."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-30",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-02",
+        "snippet": "Offer valid until December 2026",
+        "explanation": "Diwali Wellness Camp offer expires on 2026-11-05."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-31",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "unsupported_claim",
+        "clause_or_fact_id": "C-3.3",
+        "snippet": "India’s No. 1 Best Diagnostic Company, better than all private hospitals combined",
+        "explanation": "Comparative superiority claim made without verified regulatory substantiation."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-32",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-01",
+        "snippet": "instant cash no kyc",
+        "explanation": "Banned term used. Must use streamlined digital KYC verification."
+      },
+      {
+        "type": "claims",
+        "clause_or_fact_id": "C-2.1",
+        "snippet": "100% guaranteed approval",
+        "explanation": "Absolute outcome claim violates regulatory rules."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-33",
+    "client_id": "client_vyapar",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-VYA-03",
+        "snippet": "cheap pos",
+        "explanation": "Banned slang term used. Preferred term is cost-effective digital billing terminal."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-34",
+    "client_id": "client_vyapar",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-VYA-11",
+        "snippet": "₹5,000 cash prize instantly on any loan amount",
+        "explanation": "Fact mismatch: Approved cashback is ₹2,500 on ₹10L+ credit only."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-35",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-01",
+        "snippet": "chemical-free",
+        "explanation": "Banned term used. All matter contains chemicals; use botanical extracts."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-02",
+        "snippet": "fair skin",
+        "explanation": "Discriminatory terminology banned under brand guidelines."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-MIT-03",
+        "snippet": "instant whitening",
+        "explanation": "Prohibited clinical hyperbole; use natural brightening glow."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-36",
+    "client_id": "client_mitti",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-MIT-02",
+        "snippet": "₹1,200 available until Christmas 2026",
+        "explanation": "Price is ₹1,499 and promo expires on 2026-11-12."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-37",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-01",
+        "snippet": "miracle cure",
+        "explanation": "Banned term used. Must use scientifically studied terminology."
+      },
+      {
+        "type": "terminology",
+        "clause_or_fact_id": "T-KAV-03",
+        "snippet": "cheap tests",
+        "explanation": "Banned slang used instead of affordable preventive checkups."
+      },
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.2",
+        "snippet": "BUY NOW OR REGRET MISSING OUT ON COMPLETE HEALTH IMMUNITY!!!",
+        "explanation": "Excessive sales hyperbole and triple exclamation marks violate tone clause C-1.2."
+      },
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-01",
+        "snippet": "Only ₹199 for full body scan",
+        "explanation": "Fact mismatch: Basic health checkup price is ₹499, not ₹199."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-38",
+    "client_id": "client_kavach",
+    "channel": "email",
+    "expected_issues": [
+      {
+        "type": "tone",
+        "clause_or_fact_id": "C-1.1",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY!",
+        "explanation": "Alarmist, fear-mongering copy violates calm and evidence-backed tone."
+      },
+      {
+        "type": "accessibility",
+        "clause_or_fact_id": "C-5.3",
+        "snippet": "DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY! IF YOU DONT TEST TODAY YOUR FAMILY WILL SUFFER SEVERE INFECTION!",
+        "explanation": "All-caps block exceeding 15 words impairs accessibility."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-39",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "fact_mismatch",
+        "clause_or_fact_id": "F-KAV-02",
+        "snippet": "Offer valid until December 2026",
+        "explanation": "Diwali Wellness Camp offer expires on 2026-11-05."
+      }
+    ]
+  },
+  {
+    "draft_id": "DRAFT-VIOLATION-40",
+    "client_id": "client_kavach",
+    "channel": "social",
+    "expected_issues": [
+      {
+        "type": "unsupported_claim",
+        "clause_or_fact_id": "C-3.3",
+        "snippet": "India’s No. 1 Best Diagnostic Company, better than all private hospitals combined",
+        "explanation": "Comparative superiority claim made without verified regulatory substantiation."
+      }
+    ]
+  }
+]
