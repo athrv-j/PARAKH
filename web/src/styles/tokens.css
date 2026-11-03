@@ -1,20 +1,33 @@
+/* Parakh Design System Tokens & Case-File Styles */
+
 :root {
   --color-ink: #101114;
+  --color-ink-surface: #181A20;
+  --color-ink-card: #20232A;
   --color-paper: #F4EFE6;
   --color-paper-light: #FAF7F2;
+  --color-paper-worn: #E8DFC8;
   --color-stamp-red: #D7263D;
+  --color-stamp-red-bg: rgba(215, 38, 61, 0.12);
   --color-highlighter: #FFD60A;
+  --color-highlighter-bg: rgba(255, 214, 10, 0.35);
   --color-verified-green: #2FBF71;
+  --color-verified-bg: rgba(47, 191, 113, 0.14);
   --color-steel: #8A8F98;
-  --color-steel-light: #E2E4E8;
-  --color-docket-border: #D8D2C6;
+  --color-steel-light: #C2C6CE;
+  --color-steel-dark: #2B2F38;
+  --color-docket-border: #3D424E;
 
   --font-serif: 'Playfair Display', Georgia, serif;
-  --font-mono: 'Space Mono', monospace;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 
-  --shadow-card: 0 4px 12px rgba(16, 17, 20, 0.08);
-  --shadow-lift: 0 10px 24px rgba(16, 17, 20, 0.14);
+  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.25);
+  --shadow-lift: 0 12px 28px rgba(0, 0, 0, 0.4);
+  --shadow-paper: 0 6px 20px rgba(16, 17, 20, 0.18);
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 * {
@@ -23,10 +36,240 @@
   padding: 0;
 }
 
-body {
-  font-family: var(--font-sans);
+html, body {
   background-color: var(--color-ink);
-  color: var(--color-ink);
+  color: var(--color-paper-light);
+  font-family: var(--font-sans);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-steel-dark);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-steel);
+}
+
+/* Typography Helpers */
+.font-serif { font-family: var(--font-serif); }
+.font-mono { font-family: var(--font-mono); }
+.font-sans { font-family: var(--font-sans); }
+
+/* Case File Paper Sheet */
+.paper-sheet {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-paper);
+  position: relative;
+  background-image: 
+    radial-gradient(#d8d2c6 0.75px, transparent 0.75px),
+    linear-gradient(to right, rgba(0,0,0,0.02) 1px, transparent 1px);
+  background-size: 16px 16px, 100% 100%;
+}
+
+/* Rubber Stamp Styling */
+.rubber-stamp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 16px;
+  border: 3px solid var(--color-stamp-red);
+  color: var(--color-stamp-red);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border-radius: 4px;
+  transform: rotate(-3deg);
+  user-select: none;
+  background-color: var(--color-stamp-red-bg);
+  mask-image: radial-gradient(circle, black 70%, transparent 100%);
+}
+
+.rubber-stamp.approved {
+  border-color: var(--color-verified-green);
+  color: var(--color-verified-green);
+  background-color: var(--color-verified-bg);
+  transform: rotate(2deg);
+}
+
+.rubber-stamp.precedent {
+  border-color: var(--color-highlighter);
+  color: #D4AF37;
+  background-color: rgba(255, 214, 10, 0.12);
+  transform: rotate(-2deg);
+}
+
+.rubber-stamp.expired {
+  border-color: var(--color-steel);
+  color: var(--color-steel);
+  background-color: rgba(138, 143, 152, 0.12);
+  transform: rotate(4deg);
+}
+
+/* Stamp Slam Animation */
+@keyframes stampSlam {
+  0% {
+    transform: scale(2.4) rotate(-15deg);
+    opacity: 0;
+  }
+  65% {
+    transform: scale(0.95) rotate(-3deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(-3deg);
+    opacity: 1;
+  }
+}
+
+.animate-stamp-slam {
+  animation: stampSlam 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Screen Shake Effect */
+@keyframes screenShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -1px); }
+  60% { transform: translate(-1px, 2px); }
+  80% { transform: translate(2px, 1px); }
+}
+
+.screen-shake {
+  animation: screenShake 0.25s ease-in-out;
+}
+
+/* Highlighter Sweep */
+.highlight-span {
+  background-color: var(--color-highlighter-bg);
+  border-bottom: 2px solid var(--color-highlighter);
+  padding: 1px 4px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.highlight-span:hover, .highlight-span.active {
+  background-color: rgba(255, 214, 10, 0.7);
+  box-shadow: 0 0 10px rgba(255, 214, 10, 0.5);
+}
+
+/* Docket Label */
+.docket-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--color-steel);
+}
+
+/* Tilted Index Card */
+.index-card {
+  background: var(--color-ink-card);
+  border: 1px solid var(--color-docket-border);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.index-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lift);
+  border-color: var(--color-steel);
+}
+
+/* Word Diff Tokens */
+.diff-added {
+  background-color: var(--color-verified-bg);
+  color: var(--color-verified-green);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+.diff-removed {
+  background-color: var(--color-stamp-red-bg);
+  color: var(--color-stamp-red);
+  text-decoration: line-through;
+  opacity: 0.75;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
+
+/* Vault Shutter Door Animation */
+@keyframes vaultShutter {
+  0% { transform: translateY(-100%); }
+  50% { transform: translateY(0%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Buttons and Interactive Elements */
+.btn {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 0.65rem 1.2rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.btn-primary {
+  background-color: var(--color-stamp-red);
+  color: #FFFFFF;
+}
+.btn-primary:hover {
+  background-color: #B91D31;
+  box-shadow: 0 4px 12px rgba(215, 38, 61, 0.35);
+}
+
+.btn-outline {
+  background-color: transparent;
+  border-color: var(--color-docket-border);
+  color: var(--color-paper-light);
+}
+.btn-outline:hover {
+  border-color: var(--color-steel-light);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.btn-success {
+  background-color: var(--color-verified-green);
+  color: #101114;
+}
+.btn-success:hover {
+  background-color: #269C5C;
+}
+
+/* Reduced Motion Preference Fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
