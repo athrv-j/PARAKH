@@ -30,8 +30,10 @@ interface SeedDataOutput {
   }>;
 }
 
-export function seedAgencyData(dbPath?: string): SeedDataOutput {
-  const db = new DatabaseSync(dbPath || path.resolve(process.cwd(), 'parakh.db'));
+export function seedAgencyData(dbOrPath?: DatabaseSync | string): SeedDataOutput {
+  const db = dbOrPath && typeof dbOrPath === 'object' && 'prepare' in dbOrPath
+    ? (dbOrPath as DatabaseSync)
+    : new DatabaseSync(typeof dbOrPath === 'string' ? dbOrPath : path.resolve(process.cwd(), 'parakh.db'));
   runMigrations(db);
   const vault = new VaultDb(db);
 
