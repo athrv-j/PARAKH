@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'node:path';
+import fs from 'node:fs';
 import apiRouter from './routes/index.js';
 import { runMigrations } from './db/index.js';
 
@@ -23,6 +25,24 @@ try {
 // Mount API routes
 app.use('/api', apiRouter);
 
+// Serve frontend static build if available (Unified Full-Stack Server)
+const webDistCandidates = [
+  path.resolve(process.cwd(), 'web/dist'),
+  path.resolve(process.cwd(), '../web/dist')
+];
+const webDistPath = webDistCandidates.find(p => fs.existsSync(p));
+
+if (webDistPath) {
+  app.use(express.static(webDistPath));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.join(webDistPath, 'index.html'));
+  });
+  console.log(`✓ Serving Parakh frontend UI from: ${webDistPath}`);
+}
+
 // Fallback error handler
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled server error:', err);
@@ -31,7 +51,11 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
-    console.log(`Parakh backend running on http://localhost:${PORT}`);
+    console.log(`\n======================================================`);
+    console.log(`  🏛️  Parakh (परख) Unified Server Running!`);
+    console.log(`  👉  Open in Browser: http://localhost:${PORT}`);
+    console.log(`  👉  API Health:       http://localhost:${PORT}/api/health`);
+    console.log(`======================================================\n`);
   });
 }
 
