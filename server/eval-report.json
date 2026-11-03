@@ -1,0 +1,64 @@
+{
+  "timestamp": "2026-11-03T04:56:03.284Z",
+  "total_drafts_evaluated": 50,
+  "clean_drafts_count": 10,
+  "violation_drafts_count": 40,
+  "metrics_by_issue_type": {
+    "terminology": {
+      "true_positives": 30,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "precision_percent": 100,
+      "recall_percent": 100
+    },
+    "claims": {
+      "true_positives": 9,
+      "false_positives": 13,
+      "false_negatives": 0,
+      "precision_percent": 40.9,
+      "recall_percent": 100
+    },
+    "fact_mismatch": {
+      "true_positives": 18,
+      "false_positives": 0,
+      "false_negatives": 0,
+      "precision_percent": 100,
+      "recall_percent": 100
+    },
+    "accessibility": {
+      "true_positives": 5,
+      "false_positives": 5,
+      "false_negatives": 0,
+      "precision_percent": 50,
+      "recall_percent": 100
+    },
+    "tone": {
+      "true_positives": 5,
+      "false_positives": 0,
+      "false_negatives": 5,
+      "precision_percent": 100,
+      "recall_percent": 50
+    }
+  },
+  "overall_metrics": {
+    "precision_percent": 78.8,
+    "recall_percent": 93.1,
+    "f1_score": 0.854
+  },
+  "citation_gate": {
+    "total_ai_findings_evaluated": 15,
+    "verified_valid_citations": 15,
+    "uncited_dropped_count": 0,
+    "citation_validity_rate_percent": 100,
+    "share_of_findings_dropped_percent": 0
+  },
+  "case_law": {
+    "seeded_precedent_test_queries": 3,
+    "top_1_accurate_matches": 3,
+    "precedent_top_1_accuracy_percent": 100
+  },
+  "performance": {
+    "median_review_time_ms": 0.43,
+    "p95_review_time_ms": 1.43
+  }
+}
