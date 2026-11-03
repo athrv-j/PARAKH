@@ -36,7 +36,7 @@ router.post('/', (req: Request, res: Response) => {
 // Get a client's knowledge base (clauses, facts, terms)
 router.get('/:id/knowledge', (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const clauses = vault.getClauses(clientId);
     const facts = vault.getFacts(clientId);
     const terms = vault.getTerms(clientId);
@@ -61,7 +61,7 @@ router.get('/:id/knowledge', (req: Request, res: Response) => {
 // Accepts either raw text via JSON body or file upload (docx/md/txt)
 router.post('/:id/knowledge', upload.single('file'), async (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     let contentToParse = '';
 
     if (req.file) {

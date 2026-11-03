@@ -21,7 +21,7 @@ const debuggerService = new GuidelineDebuggerService(vault);
 // List drafts for a client vault
 router.get('/clients/:id/drafts', (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const db = (vault as any).db;
     const drafts = db.prepare(`
       SELECT d.*, dv.id as version_id, dv.version_num, dv.text_content
@@ -40,7 +40,7 @@ router.get('/clients/:id/drafts', (req: Request, res: Response) => {
 // Create and dynamically review a new draft
 router.post('/clients/:id/drafts', async (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const { title, channel, text, author } = req.body;
 
     if (!title || !text) {
@@ -122,7 +122,7 @@ router.post('/clients/:id/drafts', async (req: Request, res: Response) => {
 // Get Guideline Debugger Ambiguity Report
 router.get('/clients/:id/debugger', (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const reports = debuggerService.analyzeClauseAmbiguity(clientId);
     res.json({ reports });
   } catch (error: any) {
@@ -133,7 +133,7 @@ router.get('/clients/:id/debugger', (req: Request, res: Response) => {
 // Accept Guideline Rewrite
 router.post('/clients/:id/debugger/accept', (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const { clauseId, newText, acceptedBy } = req.body;
     const updated = debuggerService.acceptRewrite(clientId, clauseId, newText, acceptedBy || 'Brand Manager');
     res.json({ success: true, clause: updated });
@@ -145,7 +145,7 @@ router.post('/clients/:id/debugger/accept', (req: Request, res: Response) => {
 // Get Fact Ripple Graph
 router.get('/clients/:id/facts/graph', (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const facts = vault.getFacts(clientId);
     res.json({ facts });
   } catch (error: any) {
@@ -156,7 +156,7 @@ router.get('/clients/:id/facts/graph', (req: Request, res: Response) => {
 // Propagate Fact Ripple
 router.post('/clients/:id/facts/ripple', (req: Request, res: Response) => {
   try {
-    const clientId = req.params.id;
+    const clientId = req.params.id as string;
     const { factId, value, valid_until, dryRun } = req.body;
     const result = ripple.propagateFactChange(clientId, factId, { value, valid_until }, Boolean(dryRun));
     res.json({ success: true, result });
