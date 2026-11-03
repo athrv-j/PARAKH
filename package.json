@@ -7,9 +7,9 @@
     "web"
   ],
   "scripts": {
-    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=web\"",
-    "dev:server": "npm run dev --workspace=server",
-    "dev:web": "npm run dev --workspace=web",
+    "dev": "node dev.mjs",
+    "dev:server": "npm run dev --prefix server",
+    "dev:web": "npm run dev --prefix web",
     "build": "npm run build --workspace=server && npm run build --workspace=web",
     "test": "npm run test --workspace=server",
     "test:run": "npm run test:run --workspace=server",
