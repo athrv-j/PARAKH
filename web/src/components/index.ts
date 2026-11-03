@@ -1,2 +1,7 @@
-// Export reusable UI components (IndexCard, RubberStamp, DocketLabel, etc.)
-export {};
+export * from './RubberStamp';
+export * from './DocketLabel';
+export * from './WordDiffViewer';
+export * from './PrecedentDrawer';
+export * from './GovernanceGyroscope';
+export * from './UploadModal';
+export * from './AuthModal';

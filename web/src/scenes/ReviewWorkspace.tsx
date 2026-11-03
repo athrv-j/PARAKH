@@ -3,6 +3,7 @@ import { RubberStamp, StampType } from '../components/RubberStamp.tsx';
 import { DocketLabel } from '../components/DocketLabel.tsx';
 import { WordDiffViewer } from '../components/WordDiffViewer.tsx';
 import { PrecedentDrawer } from '../components/PrecedentDrawer.tsx';
+import { GovernanceGyroscope } from '../components/GovernanceGyroscope.tsx';
 
 export interface FindingUI {
   id: string;
@@ -265,7 +266,44 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
           </span>
         </div>
 
-        {findings.map((f, idx) => {
+        {findings.length === 0 ? (
+          <div
+            className="index-card"
+            style={{
+              padding: '2.5rem 1.5rem',
+              textAlign: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: 'var(--color-ink-card)',
+              border: '1px dashed var(--color-verified-green)',
+              borderRadius: '6px'
+            }}
+          >
+            <GovernanceGyroscope status="verified" size={160} />
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: 'var(--color-verified-green)',
+                fontSize: '0.9rem',
+                letterSpacing: '1px',
+                marginTop: '1.25rem',
+                fontWeight: 700
+              }}
+            >
+              ✓ PERFECT COMPLIANCE VERIFIED
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-paper-light)', maxWidth: '340px', marginTop: '0.5rem', lineHeight: '1.5' }}>
+              No guideline discrepancies, terminology violations, or factual mismatches detected in this draft copy.
+            </p>
+            <div style={{ marginTop: '1rem', fontSize: '0.78rem', color: 'var(--color-steel)' }}>
+              Ready to execute seal approval on the left panel.
+            </div>
+          </div>
+        ) : (
+          findings.map((f, idx) => {
+
           const isActive = f.id === activeFindingId;
           const isResolved = f.status !== 'pending';
 
@@ -384,7 +422,7 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
               )}
             </div>
           );
-        })}
+        }))}
       </div>
 
       {/* Sliding Precedent Drawer */}
