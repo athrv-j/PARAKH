@@ -9,3 +9,4 @@ export * from './QuickGuideModal';
 export * from './VaultDoorTransition';
 export * from './Header';
 export * from './HowParakhWorks';
+export * from './InteractiveUploadZone';

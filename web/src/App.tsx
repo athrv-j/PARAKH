@@ -11,6 +11,7 @@ import { QuickGuideModal } from './components/QuickGuideModal.tsx';
 import { Header, NavTabId } from './components/Header.tsx';
 import { VaultDoorTransition } from './components/VaultDoorTransition.tsx';
 import { HowParakhWorks } from './components/HowParakhWorks.tsx';
+import { InteractiveUploadZone } from './components/InteractiveUploadZone.tsx';
 import { getSupabase } from './lib/supabaseClient.ts';
 
 
@@ -37,10 +38,6 @@ export default function App() {
   const [selectedClientId, setSelectedClientId] = useState<string>('client_kavach');
   const [currentDraft, setCurrentDraft] = useState<DraftItem | null>(null);
 
-  // Quick In-Page Upload State
-  const [copyTitle, setCopyTitle] = useState('');
-  const [copyChannel, setCopyChannel] = useState('social');
-  const [copyText, setCopyText] = useState('');
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // Tab & Auth State
@@ -88,14 +85,8 @@ export default function App() {
 
   const currentClient = clients.find(c => c.id === selectedClientId) || clients[0];
 
-  // Dynamic evaluation: When user submits copy, run backend checks
-  const handleRunEvaluation = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!copyTitle.trim() || !copyText.trim()) {
-      alert('Please provide both title and copy content to evaluate.');
-      return;
-    }
-
+  // Dynamic evaluation: When user submits copy from InteractiveUploadZone
+  const handleEvaluateFromZone = async (title: string, channel: string, text: string) => {
     setIsEvaluating(true);
     setScanResult(null);
     try {
@@ -103,9 +94,9 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: copyTitle,
-          channel: copyChannel,
-          text: copyText,
+          title,
+          channel,
+          text,
           author: authUser ? authUser.email : 'Agency Creator'
         })
       });
@@ -143,6 +134,8 @@ export default function App() {
       setIsEvaluating(false);
     }
   };
+
+
 
   const handleDraftCreatedFromModal = (newDraft: any) => {
     setCurrentDraft({
@@ -319,123 +312,12 @@ export default function App() {
                   Upload your draft copy or promotional text below. Parakh will evaluate it dynamically against {currentClient.name}'s guideline clauses, prohibited terminology, and pricing fact sheets.
                 </motion.p>
 
-                {/* Direct Upload / Evaluate Form */}
-                <form
-                  onSubmit={handleRunEvaluation}
-                  style={{
-                    width: '100%',
-                    backgroundColor: 'var(--color-ink-card)',
-                    border: '1px solid var(--color-docket-border)',
-                    borderRadius: '8px',
-                    padding: '1.75rem',
-                    boxShadow: '0 12px 30px rgba(0, 0, 0, 0.45)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '1.25rem'
-                  }}
-                >
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                      Campaign Title / Headline
-                    </label>
-                    <input
-                      type="text"
-                      value={copyTitle}
-                      onChange={e => setCopyTitle(e.target.value)}
-                      placeholder="e.g. Monsoon Health Screening Campaign"
-                      required
-                      style={{
-                        width: '100%',
-                        backgroundColor: 'var(--color-ink)',
-                        border: '1px solid var(--color-docket-border)',
-                        borderRadius: '4px',
-                        padding: '0.65rem 0.85rem',
-                        color: 'var(--color-paper-light)',
-                        fontSize: '0.9rem',
-                        outline: 'none'
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                      Publishing Channel
-                    </label>
-                    <select
-                      value={copyChannel}
-                      onChange={e => setCopyChannel(e.target.value)}
-                      style={{
-                        width: '100%',
-                        backgroundColor: 'var(--color-ink)',
-                        border: '1px solid var(--color-docket-border)',
-                        borderRadius: '4px',
-                        padding: '0.65rem 0.85rem',
-                        color: 'var(--color-paper-light)',
-                        fontSize: '0.88rem',
-                        outline: 'none'
-                      }}
-                    >
-                      <option value="social">Social Media (Instagram / X / LinkedIn)</option>
-                      <option value="email">Email Newsletter</option>
-                      <option value="press_release">Press Release</option>
-                      <option value="web">Website Copy</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                      <label style={{ fontSize: '0.8rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase' }}>
-                        Draft Copy Content
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCopyTitle('Monsoon Dengue Awareness Campaign');
-                          setCopyChannel('social');
-                          setCopyText('DENGUE OUTBREAK IS KILLING HUNDREDS IN YOUR CITY! BUY NOW OR REGRET MISSING OUT ON COMPLETE HEALTH IMMUNITY!!! Book our miracle cure blood test at cheap rates for only ₹199 at all certified centres.');
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'var(--color-highlighter)',
-                          fontSize: '0.75rem',
-                          cursor: 'pointer',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        ⚡ Paste Sample Copy
-                      </button>
-                    </div>
-                    <textarea
-                      value={copyText}
-                      onChange={e => setCopyText(e.target.value)}
-                      placeholder="Paste your creative marketing copy here to evaluate against brand guidelines..."
-                      rows={6}
-                      required
-                      style={{
-                        width: '100%',
-                        backgroundColor: 'var(--color-ink)',
-                        border: '1px solid var(--color-docket-border)',
-                        borderRadius: '4px',
-                        padding: '0.75rem',
-                        color: 'var(--color-paper-light)',
-                        fontSize: '0.92rem',
-                        lineHeight: 1.6,
-                        outline: 'none',
-                        fontFamily: 'var(--font-sans)'
-                      }}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={isEvaluating}
-                    className="btn btn-primary"
-                    style={{ width: '100%', padding: '0.8rem', fontSize: '0.95rem', fontWeight: 700 }}
-                  >
-                    {isEvaluating ? '⚙️ Running Citation Gate & Brand Compliance...' : '⚡ Evaluate Copy with Parakh AI'}
-                  </button>
-                </form>
+                {/* Interactive Drag-and-Drop & Auto-Typing Upload Hub */}
+                <InteractiveUploadZone
+                  onEvaluate={handleEvaluateFromZone}
+                  isEvaluating={isEvaluating}
+                  clientName={currentClient.name}
+                />
               </div>
 
               {/* SCROLL-DRIVEN HOW PARAKH WORKS WALKTHROUGH */}
