@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { RubberStamp, StampType } from '../components/RubberStamp.tsx';
-import { DocketLabel } from '../components/DocketLabel.tsx';
 import { WordDiffViewer } from '../components/WordDiffViewer.tsx';
 import { PrecedentDrawer } from '../components/PrecedentDrawer.tsx';
 import { GovernanceGyroscope } from '../components/GovernanceGyroscope.tsx';
@@ -31,6 +30,7 @@ interface ReviewWorkspaceProps {
   initialText: string;
   initialFindings: FindingUI[];
   onDraftApproved?: () => void;
+  onNewReviewRequested?: () => void;
 }
 
 export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
@@ -40,7 +40,8 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
   channel,
   initialText,
   initialFindings,
-  onDraftApproved
+  onDraftApproved,
+  onNewReviewRequested
 }) => {
   const [draftContent, setDraftContent] = useState(initialText);
   const [findings, setFindings] = useState<FindingUI[]>(initialFindings);
@@ -52,7 +53,6 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
     type: 'APPROVED',
     animate: false
   });
-  const [isScreenShaking, setIsScreenShaking] = useState(false);
 
   // Sync findings when initial findings change
   useEffect(() => {
@@ -63,7 +63,7 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
     }
   }, [initialText, initialFindings]);
 
-  // Keyboard shortcuts (A = Accept, D = Dismiss, E = Exception)
+  // Keyboard shortcuts (A = Accept, D = Dismiss)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['input', 'textarea'].includes((e.target as HTMLElement).tagName.toLowerCase())) {
@@ -77,8 +77,6 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
         handleAcceptFix(active.id);
       } else if (e.key === 'd' || e.key === 'D') {
         handleOpenPrecedent(active);
-      } else if (e.key === 'e' || e.key === 'E') {
-        handleOpenPrecedent(active);
       }
     };
 
@@ -90,7 +88,6 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
     const finding = findings.find(f => f.id === findingId);
     if (!finding) return;
 
-    // Apply suggested fix to draft text
     if (finding.suggested_fix) {
       const updatedText = draftContent.replace(finding.span_text, finding.suggested_fix);
       setDraftContent(updatedText);
@@ -102,330 +99,333 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
   };
 
   const handleOpenPrecedent = (finding: FindingUI) => {
-    setActiveFindingId(finding.id);
     setDrawerClauseId(finding.source_id || 'C-1.1');
     setIsPrecedentDrawerOpen(true);
   };
 
   const handleSavePrecedent = (_data: { reason: string; scope: string; expiry: string; decidedBy: string }) => {
-    if (!activeFindingId) return;
-
-    setFindings(prev =>
-      prev.map(f => (f.id === activeFindingId ? { ...f, status: 'dismissed' as const } : f))
-    );
+    if (activeFindingId) {
+      setFindings(prev =>
+        prev.map(f => (f.id === activeFindingId ? { ...f, status: 'dismissed' as const } : f))
+      );
+    }
+    setIsPrecedentDrawerOpen(false);
   };
 
+
   const handleApproveDraft = () => {
-    const pendingCount = findings.filter(f => f.status === 'pending').length;
-    if (pendingCount > 0) {
-      alert(`Cannot approve: ${pendingCount} compliance finding(s) must be reviewed first.`);
-      return;
-    }
-
-    // Trigger stamp slam animation and screen shake
-    setIsScreenShaking(true);
     setStampState({ visible: true, type: 'APPROVED', animate: true });
-
-    setTimeout(() => {
-      setIsScreenShaking(false);
-      if (onDraftApproved) onDraftApproved();
-    }, 600);
+    if (onDraftApproved) onDraftApproved();
   };
 
   const pendingFindings = findings.filter(f => f.status === 'pending');
+  const isAllResolved = pendingFindings.length === 0;
 
   return (
-    <div
-      className={`review-workspace-container ${isScreenShaking ? 'screen-shake' : ''}`}
-      style={{
-        display: 'grid',
-        gridTemplateColumns: 'minmax(420px, 1.25fr) minmax(360px, 1fr)',
-        gap: '2rem',
-        width: '100%',
-        maxWidth: '1440px',
-        margin: '0 auto',
-        padding: '1.5rem',
-        alignItems: 'start'
-      }}
-    >
-      {/* LEFT COLUMN: THE DRAFT PAPER SHEET */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <DocketLabel docketId={draftId.replace('draft_', 'PRK-')} clientName={clientName} category={channel} />
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--color-steel)' }}>
-              Shortcuts: <kbd style={{ padding: '2px 6px', background: 'var(--color-steel-dark)', borderRadius: '3px' }}>A</kbd> Accept • <kbd style={{ padding: '2px 6px', background: 'var(--color-steel-dark)', borderRadius: '3px' }}>D</kbd> Dismiss
+    <div style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', padding: '1rem 2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+      {/* COMBINED TOP CONTROL BAR: Header, Status, Client, Actions all in ONE clean row */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem',
+          backgroundColor: 'var(--color-ink-card)',
+          padding: '0.85rem 1.5rem',
+          borderRadius: '8px',
+          border: '1px solid var(--color-docket-border)'
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          <div>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              DOCKET {draftId.replace('draft_', 'PRK-')} • {clientName}
             </span>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: 'var(--color-paper-light)', margin: '0.1rem 0 0 0' }}>
+              {title}
+            </h2>
           </div>
+
+          <span
+            style={{
+              padding: '3px 8px',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              backgroundColor: 'rgba(255, 255, 255, 0.08)',
+              color: 'var(--color-paper-light)',
+              textTransform: 'uppercase'
+            }}
+          >
+            📢 {channel}
+          </span>
+
+          <span
+            style={{
+              padding: '3px 10px',
+              borderRadius: '4px',
+              fontSize: '0.75rem',
+              fontFamily: 'var(--font-mono)',
+              fontWeight: 700,
+              backgroundColor: isAllResolved ? 'rgba(47, 191, 113, 0.15)' : 'rgba(215, 38, 61, 0.15)',
+              color: isAllResolved ? 'var(--color-verified-green)' : 'var(--color-stamp-red)',
+              border: `1px solid ${isAllResolved ? 'var(--color-verified-green)' : 'var(--color-stamp-red)'}`
+            }}
+          >
+            {isAllResolved ? '✓ ALL ISSUES RESOLVED' : `⚠️ ${pendingFindings.length} COMPLIANCE ISSUES`}
+          </span>
         </div>
 
-        {/* Parchment Sheet */}
-        <div
-          className="paper-sheet"
-          style={{
-            minHeight: '480px',
-            padding: '2.5rem',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-        >
-          {/* Slammed Stamp Overlay */}
-          {stampState.visible && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '40px',
-                right: '40px',
-                zIndex: 20
-              }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {onNewReviewRequested && (
+            <button
+              className="btn btn-outline"
+              onClick={onNewReviewRequested}
+              style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem' }}
             >
-              <RubberStamp type={stampState.type} animate={stampState.animate} />
-            </div>
+              + Upload Another Copy
+            </button>
           )}
 
-          <h2
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: '1.75rem',
-              marginBottom: '1.5rem',
-              color: 'var(--color-ink)',
-              borderBottom: '1px solid #d8d2c6',
-              paddingBottom: '0.75rem'
-            }}
-          >
-            {title}
-          </h2>
-
-          <div
-            style={{
-              fontSize: '1.15rem',
-              lineHeight: 1.8,
-              color: '#1a1c22',
-              whiteSpace: 'pre-wrap'
-            }}
-          >
-            {/* Render highlighted spans */}
-            {draftContent}
-          </div>
-
-          <div
-            style={{
-              marginTop: '3rem',
-              paddingTop: '1.5rem',
-              borderTop: '1px dashed #d8d2c6',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              fontSize: '0.82rem',
-              color: '#5a5e6b',
-              fontFamily: 'var(--font-mono)'
-            }}
-          >
-            <span>CONTENT CHANNEL: {channel.toUpperCase()}</span>
-            <span>VERIFIED CITATIONS ONLY // ZERO UNCHECKED CLAIMS</span>
-          </div>
-        </div>
-
-        {/* Approval Action Bar */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            backgroundColor: 'var(--color-ink-card)',
-            padding: '1rem 1.5rem',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--color-docket-border)'
-          }}
-        >
-          <div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
-              {pendingFindings.length === 0 ? '✓ All Compliance Findings Resolved' : `${pendingFindings.length} Pending Finding(s)`}
-            </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--color-steel)' }}>
-              {pendingFindings.length === 0 ? 'Ready for formal stamp approval' : 'Review each issue before final publication'}
-            </div>
-          </div>
           <button
-            className={`btn ${pendingFindings.length === 0 ? 'btn-success' : 'btn-outline'}`}
+            className={`btn ${isAllResolved ? 'btn-success' : 'btn-primary'}`}
             onClick={handleApproveDraft}
+            style={{ fontSize: '0.82rem', padding: '0.45rem 1rem', fontWeight: 700 }}
           >
-            🏛️ Stamp & Approve Draft
+            🏛️ Stamp & Approve Copy
           </button>
         </div>
       </div>
 
-      {/* RIGHT COLUMN: FINDING CARDS & INTENT-LOCK WORD DIFFS */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span className="docket-label">
-            COMPLIANCE DOCKET ({findings.length} ISSUES)
-          </span>
-          <span style={{ fontSize: '0.8rem', color: 'var(--color-highlighter)' }}>
-            Citation Gate: Verified
-          </span>
-        </div>
+      {/* MAIN TWO-COLUMN SPLIT: Editor & Copy on Left, Compliance Docket on Right */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(400px, 1.2fr) minmax(360px, 1fr)',
+          gap: '1.5rem',
+          alignItems: 'start'
+        }}
+      >
+        {/* LEFT COLUMN: THE EVALUATED COPY */}
+        <div
+          style={{
+            backgroundColor: '#F7F3EB',
+            borderRadius: '8px',
+            boxShadow: '0 8px 24px rgba(0, 0, 0, 0.35)',
+            border: '1px solid #D5CDBE',
+            padding: '2rem',
+            position: 'relative',
+            minHeight: '440px',
+            color: '#1A1C22',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
+          }}
+        >
+          {/* Slammed Stamp Overlay */}
+          {stampState.visible && (
+            <div style={{ position: 'absolute', top: '30px', right: '30px', zIndex: 20 }}>
+              <RubberStamp type={stampState.type} animate={stampState.animate} />
+            </div>
+          )}
 
-        {findings.length === 0 ? (
-          <div
-            className="index-card"
-            style={{
-              padding: '2.5rem 1.5rem',
-              textAlign: 'center',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'var(--color-ink-card)',
-              border: '1px dashed var(--color-verified-green)',
-              borderRadius: '6px'
-            }}
-          >
-            <GovernanceGyroscope status="verified" size={160} />
+          <div>
+            <div style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: '#7A756B', textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '1px' }}>
+              COPY PREVIEW // CITATION-GATED TEXT
+            </div>
+
             <div
               style={{
-                fontFamily: 'var(--font-mono)',
-                color: 'var(--color-verified-green)',
-                fontSize: '0.9rem',
-                letterSpacing: '1px',
-                marginTop: '1.25rem',
-                fontWeight: 700
+                fontSize: '1.12rem',
+                lineHeight: 1.85,
+                fontFamily: 'var(--font-sans)',
+                whiteSpace: 'pre-wrap',
+                color: '#1A1C22'
               }}
             >
-              ✓ PERFECT COMPLIANCE VERIFIED
-            </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-paper-light)', maxWidth: '340px', marginTop: '0.5rem', lineHeight: '1.5' }}>
-              No guideline discrepancies, terminology violations, or factual mismatches detected in this draft copy.
-            </p>
-            <div style={{ marginTop: '1rem', fontSize: '0.78rem', color: 'var(--color-steel)' }}>
-              Ready to execute seal approval on the left panel.
+              {draftContent}
             </div>
           </div>
-        ) : (
-          findings.map((f, idx) => {
 
-          const isActive = f.id === activeFindingId;
-          const isResolved = f.status !== 'pending';
+          <div
+            style={{
+              marginTop: '2.5rem',
+              paddingTop: '1rem',
+              borderTop: '1px dashed #D5CDBE',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              fontSize: '0.78rem',
+              color: '#7A756B',
+              fontFamily: 'var(--font-mono)'
+            }}
+          >
+            <span>CHANNEL: {channel.toUpperCase()}</span>
+            <span>GOVERNANCE: STRICT CITATION ENFORCED</span>
+          </div>
+        </div>
 
-          return (
+        {/* RIGHT COLUMN: FINDINGS DOCKET & INTENT-LOCK FIXES */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', color: 'var(--color-steel)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+              COMPLIANCE AUDIT // {findings.length} FINDINGS
+            </span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--color-highlighter)' }}>
+              Keyboard: <kbd style={{ padding: '1px 5px', background: 'var(--color-ink-card)', border: '1px solid var(--color-docket-border)', borderRadius: '3px' }}>A</kbd> Accept • <kbd style={{ padding: '1px 5px', background: 'var(--color-ink-card)', border: '1px solid var(--color-docket-border)', borderRadius: '3px' }}>D</kbd> Dismiss
+            </span>
+          </div>
+
+          {findings.length === 0 ? (
             <div
-              key={f.id}
-              className="index-card"
               style={{
-                borderLeft: `4px solid ${
-                  isResolved
-                    ? 'var(--color-verified-green)'
-                    : f.severity === 'critical'
-                    ? 'var(--color-stamp-red)'
-                    : 'var(--color-highlighter)'
-                }`,
-                borderColor: isActive ? 'var(--color-highlighter)' : undefined,
-                boxShadow: isActive ? '0 0 18px rgba(255, 214, 10, 0.35)' : undefined,
-                opacity: isResolved ? 0.7 : 1,
-                cursor: 'pointer'
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                backgroundColor: 'var(--color-ink-card)',
+                borderRadius: '8px',
+                border: '1px dashed var(--color-verified-green)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}
-              onClick={() => setActiveFindingId(f.id)}
             >
-              {/* Card Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                <span
-                  style={{
-                    padding: '2px 8px',
-                    borderRadius: '3px',
-                    fontSize: '0.72rem',
-                    fontFamily: 'var(--font-mono)',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    backgroundColor:
-                      f.source_type === 'ai'
-                        ? 'rgba(215, 38, 61, 0.2)'
-                        : 'rgba(255, 214, 10, 0.2)',
-                    color: f.source_type === 'ai' ? '#FF6B6B' : 'var(--color-highlighter)'
-                  }}
-                >
-                  {f.source_type.toUpperCase()} • {f.source_id || 'RULE'}
-                </span>
-                <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)' }}>
-                  ISSUE #{idx + 1}
-                </span>
+              <GovernanceGyroscope status="verified" size={140} />
+              <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-verified-green)', fontSize: '0.92rem', fontWeight: 700, marginTop: '1rem', letterSpacing: '1px' }}>
+                ✓ 100% COMPLIANT COPY
               </div>
-
-              {/* Quoted Violation Span */}
-              <div style={{ margin: '0.5rem 0', fontSize: '0.92rem', color: 'var(--color-paper-light)' }}>
-                <strong>Flagged Text:</strong>{' '}
-                <span style={{ backgroundColor: 'var(--color-stamp-red-bg)', padding: '2px 6px', borderRadius: '3px', color: '#FF8A8A' }}>
-                  "{f.span_text}"
-                </span>
-              </div>
-
-              {/* Source Clause Quotation (Citation Gate) */}
-              <div
-                style={{
-                  fontSize: '0.82rem',
-                  color: 'var(--color-steel-light)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.2)',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: 'var(--radius-sm)',
-                  borderLeft: '2px solid var(--color-steel)',
-                  margin: '0.5rem 0'
-                }}
-              >
-                <div style={{ fontSize: '0.7rem', color: 'var(--color-steel)', textTransform: 'uppercase', marginBottom: '2px' }}>
-                  Quoted Clause Source:
-                </div>
-                "{f.source_text}"
-              </div>
-
-              {/* Explanation */}
-              <p style={{ fontSize: '0.85rem', color: 'var(--color-steel-light)', margin: '0.5rem 0' }}>
-                {f.explanation}
+              <p style={{ fontSize: '0.85rem', color: 'var(--color-steel)', maxWidth: '320px', marginTop: '0.5rem', lineHeight: 1.5 }}>
+                Zero guideline discrepancies, banned terminology, or pricing mismatches detected.
               </p>
-
-              {/* Word-level Diff from Intent Lock */}
-              {f.word_diff && f.word_diff.length > 0 && (
-                <div style={{ marginTop: '0.5rem' }}>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--color-verified-green)', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    Intent-Lock Suggested Correction:
-                  </div>
-                  <WordDiffViewer tokens={f.word_diff} />
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              {!isResolved ? (
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                  <button
-                    className="btn btn-primary"
-                    style={{ flex: 1, padding: '0.5rem', fontSize: '0.78rem' }}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleAcceptFix(f.id);
-                    }}
-                  >
-                    ✓ Accept Fix
-                  </button>
-                  <button
-                    className="btn btn-outline"
-                    style={{ flex: 1, padding: '0.5rem', fontSize: '0.78rem' }}
-                    onClick={e => {
-                      e.stopPropagation();
-                      handleOpenPrecedent(f);
-                    }}
-                  >
-                    📁 Dismiss / File Precedent
-                  </button>
-                </div>
-              ) : (
-                <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--color-verified-green)' }}>
-                  ✓ Decision logged: {f.status.toUpperCase()}
-                </div>
-              )}
             </div>
-          );
-        }))}
+          ) : (
+            findings.map((f, idx) => {
+              const isActive = f.id === activeFindingId;
+              const isResolved = f.status !== 'pending';
+
+              return (
+                <div
+                  key={f.id}
+                  style={{
+                    backgroundColor: 'var(--color-ink-card)',
+                    border: `1px solid ${isActive ? 'var(--color-highlighter)' : 'var(--color-docket-border)'}`,
+                    borderLeft: `4px solid ${
+                      isResolved
+                        ? 'var(--color-verified-green)'
+                        : f.severity === 'critical'
+                        ? 'var(--color-stamp-red)'
+                        : 'var(--color-highlighter)'
+                    }`,
+                    borderRadius: '8px',
+                    padding: '1.25rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isActive ? '0 0 16px rgba(255, 214, 10, 0.2)' : undefined,
+                    opacity: isResolved ? 0.65 : 1,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setActiveFindingId(f.id)}
+                >
+                  {/* Finding Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '3px',
+                        fontSize: '0.72rem',
+                        fontFamily: 'var(--font-mono)',
+                        fontWeight: 700,
+                        backgroundColor: f.source_type === 'ai' ? 'rgba(215, 38, 61, 0.2)' : 'rgba(255, 214, 10, 0.2)',
+                        color: f.source_type === 'ai' ? '#FF6B6B' : 'var(--color-highlighter)',
+                        textTransform: 'uppercase'
+                      }}
+                    >
+                      {f.source_type.toUpperCase()} • {f.source_id || 'RULE'}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)' }}>
+                      ISSUE #{idx + 1}
+                    </span>
+                  </div>
+
+                  {/* Flagged text */}
+                  <div style={{ fontSize: '0.88rem', color: 'var(--color-paper-light)', margin: '0.4rem 0' }}>
+                    <strong>Flagged:</strong>{' '}
+                    <span style={{ backgroundColor: 'rgba(215, 38, 61, 0.2)', color: '#FF8A8A', padding: '2px 6px', borderRadius: '3px' }}>
+                      "{f.span_text}"
+                    </span>
+                  </div>
+
+                  {/* Quoted Guideline Clause (Citation Gate) */}
+                  <div
+                    style={{
+                      fontSize: '0.8rem',
+                      color: 'var(--color-steel)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.25)',
+                      padding: '0.5rem 0.75rem',
+                      borderRadius: '4px',
+                      borderLeft: '2px solid var(--color-steel)',
+                      margin: '0.5rem 0'
+                    }}
+                  >
+                    <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: 'var(--color-steel-light)', marginBottom: '2px' }}>
+                      Quoted Brand Clause (Citation Gate):
+                    </div>
+                    "{f.source_text}"
+                  </div>
+
+                  {/* Explanation */}
+                  <p style={{ fontSize: '0.84rem', color: 'var(--color-paper-light)', margin: '0.5rem 0', lineHeight: 1.5 }}>
+                    {f.explanation}
+                  </p>
+
+                  {/* Word-level Diff */}
+                  {f.word_diff && f.word_diff.length > 0 && (
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <div style={{ fontSize: '0.7rem', color: 'var(--color-verified-green)', textTransform: 'uppercase', marginBottom: '3px' }}>
+                        Intent-Lock Suggested Fix:
+                      </div>
+                      <WordDiffViewer tokens={f.word_diff} />
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  {!isResolved ? (
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+                      <button
+                        className="btn btn-primary"
+                        style={{ flex: 1, padding: '0.45rem', fontSize: '0.78rem' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleAcceptFix(f.id);
+                        }}
+                      >
+                        ✓ Accept Fix
+                      </button>
+                      <button
+                        className="btn btn-outline"
+                        style={{ flex: 1, padding: '0.45rem', fontSize: '0.78rem' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          handleOpenPrecedent(f);
+                        }}
+                      >
+                        📁 Dismiss / Exception
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ marginTop: '0.75rem', fontSize: '0.78rem', color: 'var(--color-verified-green)', fontWeight: 600 }}>
+                      ✓ Decision logged: {f.status.toUpperCase()}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
-      {/* Sliding Precedent Drawer */}
+      {/* Precedent Filing Drawer */}
       <PrecedentDrawer
         isOpen={isPrecedentDrawerOpen}
         onClose={() => setIsPrecedentDrawerOpen(false)}
