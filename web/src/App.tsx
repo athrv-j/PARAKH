@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion } from 'motion/react';
 import { ReviewWorkspace, FindingUI } from './scenes/ReviewWorkspace.tsx';
 import { FactRippleBoard } from './scenes/FactRippleBoard.tsx';
 import { GuidelineDebuggerView } from './scenes/GuidelineDebuggerView.tsx';
@@ -9,6 +10,7 @@ import { AuthModal } from './components/AuthModal.tsx';
 import { QuickGuideModal } from './components/QuickGuideModal.tsx';
 import { Header, NavTabId } from './components/Header.tsx';
 import { VaultDoorTransition } from './components/VaultDoorTransition.tsx';
+import { HowParakhWorks } from './components/HowParakhWorks.tsx';
 import { getSupabase } from './lib/supabaseClient.ts';
 
 
@@ -204,9 +206,9 @@ export default function App() {
       <main style={{ flex: 1, padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
         {activeTab === 'review' && (
           <>
-            {/* IF NO COPY IS UPLOADED YET: SHOW CLEAN UPLOAD & EVALUATION HUB */}
             {!currentDraft ? (
-              <div
+              <>
+                <div
                 ref={heroRef}
                 onMouseMove={e => {
                   if (!heroRef.current) return;
@@ -268,30 +270,55 @@ export default function App() {
                   ACTIVE VAULT: {currentClient.name.toUpperCase()}
                 </div>
 
+                {/* Word-by-Word Blur-to-Sharp Staggered Animated Headline */}
                 <h1
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: '1.8rem',
+                    fontSize: 'clamp(1.75rem, 4vw, 2.35rem)',
                     color: 'var(--color-paper-light)',
                     textAlign: 'center',
-                    margin: '0 0 0.5rem 0'
+                    margin: '0 0 0.75rem 0',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    gap: '0.35rem 0.5rem',
+                    lineHeight: 1.25,
+                    fontWeight: 800
                   }}
                 >
-                  Upload or Paste Copy for Brand Governance Review
+                  {"Upload or Paste Copy for Brand Governance Review".split(' ').map((word, i) => (
+                    <motion.span
+                      key={i}
+                      initial={{ filter: 'blur(8px)', opacity: 0, y: 10 }}
+                      animate={{ filter: 'blur(0px)', opacity: 1, y: 0 }}
+                      transition={{
+                        duration: 0.55,
+                        delay: 0.12 + i * 0.05,
+                        ease: [0.19, 1.0, 0.22, 1.0]
+                      }}
+                      style={{ display: 'inline-block' }}
+                    >
+                      {word}
+                    </motion.span>
+                  ))}
                 </h1>
 
-                <p
+                {/* Subtext Fade Up */}
+                <motion.p
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.58, ease: [0.19, 1.0, 0.22, 1.0] }}
                   style={{
-                    fontSize: '0.88rem',
+                    fontSize: '0.92rem',
                     color: 'var(--color-steel)',
                     textAlign: 'center',
-                    maxWidth: '540px',
-                    lineHeight: '1.5',
+                    maxWidth: '560px',
+                    lineHeight: '1.6',
                     marginBottom: '1.75rem'
                   }}
                 >
                   Upload your draft copy or promotional text below. Parakh will evaluate it dynamically against {currentClient.name}'s guideline clauses, prohibited terminology, and pricing fact sheets.
-                </p>
+                </motion.p>
 
                 {/* Direct Upload / Evaluate Form */}
                 <form
@@ -411,7 +438,11 @@ export default function App() {
                   </button>
                 </form>
               </div>
-            ) : (
+
+              {/* SCROLL-DRIVEN HOW PARAKH WORKS WALKTHROUGH */}
+              <HowParakhWorks />
+            </>
+          ) : (
               /* WHEN USER HAS SUBMITTED: SHOW STREAMLINED REVIEW WORKSPACE */
               <ReviewWorkspace
                 clientId={currentClient.id}
