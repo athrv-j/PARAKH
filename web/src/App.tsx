@@ -7,7 +7,10 @@ import { GovernanceGyroscope } from './components/GovernanceGyroscope.tsx';
 import { UploadModal } from './components/UploadModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
 import { QuickGuideModal } from './components/QuickGuideModal.tsx';
+import { Header, NavTabId } from './components/Header.tsx';
+import { VaultDoorTransition } from './components/VaultDoorTransition.tsx';
 import { getSupabase } from './lib/supabaseClient.ts';
+
 
 interface ClientItem {
   id: string;
@@ -39,11 +42,17 @@ export default function App() {
   const [isEvaluating, setIsEvaluating] = useState(false);
 
   // Tab & Auth State
-  const [activeTab, setActiveTab] = useState<'review' | 'ripple' | 'debugger' | 'about_ai'>('review');
+  const [activeTab, setActiveTab] = useState<NavTabId>('review');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
+
+  // Vault Door Transition State
+  const [isVaultDoorTransitionOpen, setIsVaultDoorTransitionOpen] = useState(false);
+  const [targetVaultName, setTargetVaultName] = useState('');
+  const [pendingVaultId, setPendingVaultId] = useState<string | null>(null);
+
 
   // Listen for Supabase Auth state
   useEffect(() => {
@@ -129,6 +138,22 @@ export default function App() {
     setActiveTab('review');
   };
 
+  const handleClientSwitch = (newId: string) => {
+    if (newId === selectedClientId) return;
+    const target = clients.find(c => c.id === newId);
+    setTargetVaultName(target?.name || 'Client Vault');
+    setPendingVaultId(newId);
+    setIsVaultDoorTransitionOpen(true);
+  };
+
+  const handleTransitionComplete = () => {
+    if (pendingVaultId) {
+      setSelectedClientId(pendingVaultId);
+      setCurrentDraft(null);
+    }
+    setIsVaultDoorTransitionOpen(false);
+  };
+
   const handleClientCreated = (newClient: { id: string; name: string }) => {
     setClients(prev => [...prev, newClient]);
     setSelectedClientId(newClient.id);
@@ -137,147 +162,26 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--color-ink)' }}>
-      {/* CLEAN ENTERPRISE TOP HEADER */}
-      <header
-        style={{
-          borderBottom: '1px solid var(--color-docket-border)',
-          backgroundColor: 'var(--color-ink-surface)',
-          padding: '0.75rem 2rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem' }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.55rem', fontWeight: 800, color: 'var(--color-paper-light)' }}>
-              Parakh
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.95rem', color: 'var(--color-steel)' }}>
-              (परख)
-            </span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--color-highlighter)', fontFamily: 'var(--font-mono)', marginLeft: '6px' }}>
-              // BRAND GOVERNANCE
-            </span>
-          </div>
+      {/* UPGRADED HEADER WITH STICKY SCROLL COMPRESSION, GLIDING RED PILL, AND VAULT DROPDOWN */}
+      <Header
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        clients={clients}
+        selectedClientId={selectedClientId}
+        onClientSwitch={handleClientSwitch}
+        authUser={authUser}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenUpload={() => setIsUploadModalOpen(true)}
+        onOpenQuickGuide={() => setIsQuickGuideOpen(true)}
+      />
 
-          {/* Client Vault Selector */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'var(--color-ink-card)', padding: '4px 10px', borderRadius: '4px', border: '1px solid var(--color-docket-border)' }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--color-steel)', textTransform: 'uppercase' }}>Brand Vault:</span>
-            <select
-              value={selectedClientId}
-              onChange={e => {
-                setSelectedClientId(e.target.value);
-                setCurrentDraft(null); // Reset draft so user uploads for this vault
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--color-paper-light)',
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                outline: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              {clients.map(c => (
-                <option key={c.id} value={c.id} style={{ backgroundColor: 'var(--color-ink)' }}>
-                  🏢 {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+      {/* MECHANICAL VAULT DOOR TRANSITION WITH TYPEWRITER EFFECT */}
+      <VaultDoorTransition
+        isOpen={isVaultDoorTransitionOpen}
+        targetVaultName={targetVaultName}
+        onTransitionComplete={handleTransitionComplete}
+      />
 
-        {/* Navigation Tabs */}
-        <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <button
-            className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 0.9rem', fontSize: '0.8rem' }}
-            onClick={() => setActiveTab('review')}
-          >
-            📋 Review Workspace
-          </button>
-          <button
-            className={`btn ${activeTab === 'ripple' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 0.9rem', fontSize: '0.8rem' }}
-            onClick={() => setActiveTab('ripple')}
-          >
-            🕸️ Fact Ripple Board
-          </button>
-          <button
-            className={`btn ${activeTab === 'debugger' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 0.9rem', fontSize: '0.8rem' }}
-            onClick={() => setActiveTab('debugger')}
-          >
-            🩺 Guideline Debugger
-          </button>
-          <button
-            className={`btn ${activeTab === 'about_ai' ? 'btn-primary' : 'btn-outline'}`}
-            style={{ padding: '0.5rem 0.9rem', fontSize: '0.8rem' }}
-            onClick={() => setActiveTab('about_ai')}
-          >
-            🛡️ About AI
-          </button>
-        </nav>
-
-        {/* Supabase Authentication & Upload Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button
-            className="btn btn-outline"
-            style={{
-              padding: '0.45rem 0.85rem',
-              fontSize: '0.78rem',
-              borderColor: authUser ? 'var(--color-verified-green)' : 'var(--color-docket-border)',
-              color: authUser ? 'var(--color-verified-green)' : 'var(--color-paper-light)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem'
-            }}
-            onClick={() => setIsAuthModalOpen(true)}
-          >
-            <span>⚡</span>
-            <span>{authUser ? authUser.email.split('@')[0] : 'Sign In with Supabase'}</span>
-          </button>
-
-          <button
-            className="btn btn-primary"
-            style={{ padding: '0.45rem 0.95rem', fontSize: '0.8rem', fontWeight: 600 }}
-            onClick={() => setIsUploadModalOpen(true)}
-          >
-            + Ingest Guidelines (.docx/.md)
-          </button>
-
-          {/* Quick Guide Info Icon Button */}
-          <button
-            title="Project Quick Guide"
-            onClick={() => setIsQuickGuideOpen(true)}
-            style={{
-              width: '32px',
-              height: '32px',
-              borderRadius: '50%',
-              backgroundColor: 'var(--color-ink-card)',
-              border: '1px solid var(--color-highlighter)',
-              color: 'var(--color-highlighter)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              fontSize: '0.95rem',
-              fontWeight: 800,
-              boxShadow: '0 0 10px rgba(255, 214, 10, 0.2)'
-            }}
-          >
-            ⓘ
-          </button>
-        </div>
-      </header>
 
       {/* MAIN VIEWPORT */}
       <main style={{ flex: 1, padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>

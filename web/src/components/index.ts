@@ -6,3 +6,5 @@ export * from './GovernanceGyroscope';
 export * from './UploadModal';
 export * from './AuthModal';
 export * from './QuickGuideModal';
+export * from './VaultDoorTransition';
+export * from './Header';
