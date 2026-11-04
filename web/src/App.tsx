@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ReviewWorkspace, FindingUI } from './scenes/ReviewWorkspace.tsx';
 import { FactRippleBoard } from './scenes/FactRippleBoard.tsx';
 import { GuidelineDebuggerView } from './scenes/GuidelineDebuggerView.tsx';
@@ -53,6 +53,11 @@ export default function App() {
   const [targetVaultName, setTargetVaultName] = useState('');
   const [pendingVaultId, setPendingVaultId] = useState<string | null>(null);
 
+  // Gov Core Scan Result & Hero Spotlight State
+  const [scanResult, setScanResult] = useState<'green' | 'amber' | 'red' | null>(null);
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [spotlightPos, setSpotlightPos] = useState({ x: 390, y: 220 });
+
 
   // Listen for Supabase Auth state
   useEffect(() => {
@@ -91,6 +96,7 @@ export default function App() {
     }
 
     setIsEvaluating(true);
+    setScanResult(null);
     try {
       const response = await fetch(`/api/review/clients/${selectedClientId}/drafts`, {
         method: 'POST',
@@ -109,19 +115,30 @@ export default function App() {
 
       const data = await response.json();
       if (data.draft) {
-        setCurrentDraft({
-          id: data.draft.id,
-          version_id: data.draft.version_id,
-          title: data.draft.title,
-          channel: data.draft.channel,
-          text: data.draft.text,
-          findings: data.draft.findings || []
-        });
-        setActiveTab('review');
+        const findings = data.draft.findings || [];
+        const hasCritical = findings.some((f: any) => f.severity === 'critical');
+        const hasWarning = findings.some((f: any) => f.severity === 'warning');
+        const result: 'green' | 'amber' | 'red' = hasCritical ? 'red' : hasWarning ? 'amber' : 'green';
+        setScanResult(result);
+
+        // Allow scan completion flash to display on Gov Core before unrolling review workspace
+        setTimeout(() => {
+          setCurrentDraft({
+            id: data.draft.id,
+            version_id: data.draft.version_id,
+            title: data.draft.title,
+            channel: data.draft.channel,
+            text: data.draft.text,
+            findings: data.draft.findings || []
+          });
+          setActiveTab('review');
+          setIsEvaluating(false);
+        }, 950);
+      } else {
+        setIsEvaluating(false);
       }
     } catch (err: any) {
       alert(`Error evaluating copy: ${err.message}`);
-    } finally {
       setIsEvaluating(false);
     }
   };
@@ -190,19 +207,52 @@ export default function App() {
             {/* IF NO COPY IS UPLOADED YET: SHOW CLEAN UPLOAD & EVALUATION HUB */}
             {!currentDraft ? (
               <div
+                ref={heroRef}
+                onMouseMove={e => {
+                  if (!heroRef.current) return;
+                  const rect = heroRef.current.getBoundingClientRect();
+                  setSpotlightPos({
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                  });
+                }}
                 style={{
+                  position: 'relative',
                   width: '100%',
                   maxWidth: '780px',
                   margin: '1.5rem auto',
-                  padding: '0 1.5rem',
+                  padding: '2.5rem 1.5rem',
+                  borderRadius: '12px',
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  overflow: 'hidden',
+                  background: `radial-gradient(650px circle at ${spotlightPos.x}px ${spotlightPos.y}px, rgba(215, 38, 61, 0.09), rgba(255, 214, 10, 0.04) 45%, transparent 75%)`,
+                  border: '1px solid var(--color-docket-border)',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5)'
                 }}
               >
-                {/* Center Moving Interactive Graphic */}
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <GovernanceGyroscope status="active" size={180} />
+                {/* Slow-Drifting Paper Grain Texture Overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    inset: '-50px',
+                    pointerEvents: 'none',
+                    opacity: 0.16,
+                    zIndex: 0,
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E")`,
+                    animation: 'paperGrainDrift 36s ease-in-out infinite alternate'
+                  }}
+                />
+
+                {/* Center Moving Interactive Gov Core Orbit Graphic */}
+                <div style={{ marginBottom: '1.75rem', position: 'relative', zIndex: 1 }}>
+                  <GovernanceGyroscope
+                    status={isEvaluating ? 'scanning' : 'active'}
+                    isScanning={isEvaluating}
+                    scanResult={scanResult}
+                    size="min(220px, 75vw)"
+                  />
                 </div>
 
                 <div

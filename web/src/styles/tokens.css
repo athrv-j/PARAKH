@@ -264,6 +264,13 @@ html, body {
   background-color: #269C5C;
 }
 
+/* Paper Grain Slow Drift Keyframes */
+@keyframes paperGrainDrift {
+  0% { transform: translate(0px, 0px) scale(1); }
+  50% { transform: translate(-25px, 18px) scale(1.04); }
+  100% { transform: translate(15px, -20px) scale(1); }
+}
+
 /* Reduced Motion Preference Fallbacks */
 @media (prefers-reduced-motion: reduce) {
   * {
@@ -273,3 +280,4 @@ html, body {
     scroll-behavior: auto !important;
   }
 }
+
