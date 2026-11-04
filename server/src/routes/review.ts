@@ -18,24 +18,90 @@ const caseLaw = new BrandCaseLawService(vault);
 const ripple = new FactRippleEngine(vault);
 const debuggerService = new GuidelineDebuggerService(vault);
 
-// List drafts for a client vault
+import { seedAgencyData } from '../scripts/seedAgency.js';
+
+// Seed showcase data for hackathon judges & demonstration
+router.post('/seed-showcase', (_req: Request, res: Response) => {
+  try {
+    const db = (vault as any).db;
+    const result = seedAgencyData(db);
+    res.json({
+      success: true,
+      message: 'Seeded 3 Indian brand vaults with clauses, facts, terms, and benchmark campaigns',
+      clientsCount: result.clients.length,
+      cleanDraftsCount: result.cleanDrafts.length,
+      groundTruthDraftsCount: result.groundTruth.length
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// List drafts for a client vault with attached findings & word diffs
 router.get('/clients/:id/drafts', (req: Request, res: Response) => {
   try {
     const clientId = req.params.id as string;
     const db = (vault as any).db;
-    const drafts = db.prepare(`
+    const rawDrafts = db.prepare(`
       SELECT d.*, dv.id as version_id, dv.version_num, dv.text_content
       FROM drafts d
       LEFT JOIN draft_versions dv ON d.id = dv.draft_id
       WHERE d.client_id = ?
       ORDER BY d.created_at DESC
-    `).all(clientId);
+    `).all(clientId) as any[];
 
-    res.json({ drafts });
+    const fullDrafts = rawDrafts.map((d: any) => {
+      let findings = d.version_id ? vault.getFindingsByVersion(clientId, d.version_id) : [];
+
+      // If findings are not yet generated for this version, run deterministic checks on the fly
+      if (findings.length === 0 && d.text_content && d.version_id) {
+        const generated = runDeterministicChecks(clientId, d.text_content, vault);
+        const intent = intentLock.extractIntent(d.text_content, d.channel || 'social');
+
+        generated.forEach(f => {
+          const fix = intentLock.generateFix(d.text_content, f, intent);
+          const fId = `find_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+          vault.insertFinding(clientId, {
+            id: fId,
+            version_id: d.version_id,
+            type: f.type,
+            severity: f.severity,
+            span_start: f.span_start,
+            span_end: f.span_end,
+            span_text: f.span_text,
+            source_type: f.source_type,
+            source_id: f.source_id,
+            source_text: f.source_text,
+            model_name: f.model_name,
+            explanation: f.explanation,
+            suggested_fix: fix.suggested_rewrite,
+            status: 'pending'
+          });
+        });
+
+        findings = vault.getFindingsByVersion(clientId, d.version_id);
+      }
+
+      const formattedFindings = findings.map((f: any) => ({
+        ...f,
+        word_diff: f.suggested_fix ? [
+          { value: f.span_text, removed: true },
+          { value: f.suggested_fix, added: true }
+        ] : []
+      }));
+
+      return {
+        ...d,
+        findings: formattedFindings
+      };
+    });
+
+    res.json({ drafts: fullDrafts });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 // Create and dynamically review a new draft
 router.post('/clients/:id/drafts', async (req: Request, res: Response) => {

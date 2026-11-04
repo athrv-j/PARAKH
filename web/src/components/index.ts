@@ -5,3 +5,4 @@ export * from './PrecedentDrawer';
 export * from './GovernanceGyroscope';
 export * from './UploadModal';
 export * from './AuthModal';
+export * from './JudgePitchModal';
