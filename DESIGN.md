@@ -46,7 +46,44 @@
 
 ---
 
+## 🎬 Motion System (`motion/react`)
+
+> **Guiding Principle:** Tactile, editorial physics modeled after handling physical dockets, parchment paper, and ink rubber stamps. All animations are hardware-accelerated.
+
+### ⚡ Performance Rules
+* **Strict Constraint:** Animate **only `transform` (`x`, `y`, `scale`, `rotate`) and `opacity`**. Never animate layout-triggering properties (`width`, `height`, `top`, `left`, `margin`, `padding`).
+* **Framework:** Standardized on `motion/react` via the centralized `/web/src/motion/` design module.
+* **Global Configuration:** Wrapped in `<MotionConfig reducedMotion="user">` at the application root (`main.tsx`) to strictly respect OS vestibular preferences.
+
+### 🌀 Spring Presets
+| Preset | Stiffness | Damping | Mass | Role |
+| :--- | :--- | :--- | :--- | :--- |
+| `snappy` | 420 | 28 | 0.7 | Tactile feedback, buttons, chips, stamp slam impact |
+| `soft` | 190 | 24 | 1.0 | Smooth modal entries, card reveals, drawer slides |
+| `bouncy` | 320 | 14 | 0.8 | Gyroscopic pulses, playful recoil on action triggers |
+
+### ⏱️ Timing & Easing Tokens
+* **Durations:** `instant` (0.1s), `fast` (0.2s), `normal` (0.35s), `slow` (0.6s), `deliberate` (0.9s).
+* **Easings:**
+  * `editorial`: `[0.19, 1.0, 0.22, 1.0]` (high-end deceleration curve)
+  * `caseFileOut`: `[0.16, 1, 0.3, 1]` (smooth docket unrolling)
+  * `stampImpact`: `[0.34, 1.56, 0.64, 1]` (overshoot settling)
+
+### 📦 Shared Motion Variants
+1. `fadeUp`: Smooth opacity fade and upward translation (`y: 16 -> 0`).
+2. `staggerContainer`: Coordinated child cascade with configurable stagger and delay.
+3. `stampSlam`: Dramatic stamp entry from `scale: 2.2, rotate: -14°` to `scale: 1, rotate: -3°` with `snappy` spring.
+4. `highlightSweep`: Horizontal marker unroll utilizing `scaleX: 0 -> 1` anchored at `originX: 0`.
+
+### 🪝 Interactive Hooks
+* **`useMagnetic(ref, { strength })`:** Gently pulls interactive icons and action buttons toward the cursor on hover.
+* **`useTilt(ref, { maxTilt, scale })`:** Creates a 3D perspective tilt on index cards (`rotateX`, `rotateY`, `scale`).
+* **`useSpotlight(ref)`:** Tracks mouse coordinates to power dynamic radial illumination without layout recalibration.
+
+---
+
 ## ♿ Accessibility & Motion
-* **Reduced Motion:** When `prefers-reduced-motion` is detected, all stamp-slam screen shakes, string physics, and highlighter sweeps fall back to instant, static visual states.
+* **Reduced Motion:** When `prefers-reduced-motion` is detected, all stamp-slam screen shakes, string physics, and highlighter sweeps fall back to instant, static visual states via `MotionConfig`.
 * **Touch Targets:** Minimum 44×44px for all interactive buttons, chips, and toggles.
 * **Color Contrast:** All UI elements exceed WCAG AA 4.5:1 ratio.
+
