@@ -6,6 +6,7 @@ import { AboutAiView } from './pages/AboutAiView.tsx';
 import { GovernanceGyroscope } from './components/GovernanceGyroscope.tsx';
 import { UploadModal } from './components/UploadModal.tsx';
 import { AuthModal } from './components/AuthModal.tsx';
+import { QuickGuideModal } from './components/QuickGuideModal.tsx';
 import { getSupabase } from './lib/supabaseClient.ts';
 
 interface ClientItem {
@@ -41,6 +42,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'review' | 'ripple' | 'debugger' | 'about_ai'>('review');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isQuickGuideOpen, setIsQuickGuideOpen] = useState(false);
   const [authUser, setAuthUser] = useState<any>(null);
 
   // Listen for Supabase Auth state
@@ -250,6 +252,29 @@ export default function App() {
             onClick={() => setIsUploadModalOpen(true)}
           >
             + Ingest Guidelines (.docx/.md)
+          </button>
+
+          {/* Quick Guide Info Icon Button */}
+          <button
+            title="Project Quick Guide"
+            onClick={() => setIsQuickGuideOpen(true)}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-ink-card)',
+              border: '1px solid var(--color-highlighter)',
+              color: 'var(--color-highlighter)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: '0.95rem',
+              fontWeight: 800,
+              boxShadow: '0 0 10px rgba(255, 214, 10, 0.2)'
+            }}
+          >
+            ⓘ
           </button>
         </div>
       </header>
@@ -509,6 +534,12 @@ export default function App() {
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
         onAuthStateChange={user => setAuthUser(user)}
+      />
+
+      {/* Project Quick Guide Modal */}
+      <QuickGuideModal
+        isOpen={isQuickGuideOpen}
+        onClose={() => setIsQuickGuideOpen(false)}
       />
     </div>
   );
