@@ -6,7 +6,7 @@ import './styles/tokens.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="never">
       <App />
     </MotionConfig>
   </React.StrictMode>

@@ -1,17 +1,12 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useSpring, useInView } from 'motion/react';
-import { springs } from '../motion';
+import { motion, useScroll, useSpring } from 'motion/react';
 
 // ============================================================================
 // STEP 1 ANIMATION: UPLOAD (Document Ingestion Scanner)
 // ============================================================================
 const UploadStepAnimation: React.FC = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
-
   return (
     <div
-      ref={ref}
       style={{
         width: '100%',
         height: '140px',
@@ -38,8 +33,8 @@ const UploadStepAnimation: React.FC = () => {
 
       {/* Document Card Ingesting */}
       <motion.div
-        animate={isInView ? { y: [20, -6, 0], opacity: [0, 1, 1] } : { y: 20, opacity: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        animate={{ y: [0, -5, 0] }}
+        transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
         style={{
           width: '180px',
           padding: '10px 14px',
@@ -62,9 +57,9 @@ const UploadStepAnimation: React.FC = () => {
         <div style={{ height: '4px', width: '75%', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: '2px' }} />
       </motion.div>
 
-      {/* Laser Scanning Beam */}
+      {/* Laser Scanning Beam (Continuous Vertical Sweep) */}
       <motion.div
-        animate={isInView ? { y: [-60, 60, -60] } : { y: -60 }}
+        animate={{ y: [-50, 50, -50] }}
         transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
         style={{
           position: 'absolute',
@@ -84,9 +79,6 @@ const UploadStepAnimation: React.FC = () => {
 // STEP 2 ANIMATION: CHECK (Deterministic Policy Rule Matrix)
 // ============================================================================
 const CheckStepAnimation: React.FC = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
-
   const rules = [
     { label: 'Prohibited Medical Claims', status: 'FLAGGED', color: 'var(--color-stamp-red)' },
     { label: 'Fact Verification vs DB', status: 'VERIFIED', color: 'var(--color-verified-green)' },
@@ -95,7 +87,6 @@ const CheckStepAnimation: React.FC = () => {
 
   return (
     <div
-      ref={ref}
       style={{
         width: '100%',
         height: '140px',
@@ -113,9 +104,9 @@ const CheckStepAnimation: React.FC = () => {
       {rules.map((rule, idx) => (
         <motion.div
           key={rule.label}
-          initial={{ opacity: 0, x: -16 }}
-          animate={isInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -16 }}
-          transition={{ delay: idx * 0.18, duration: 0.4 }}
+          initial={{ opacity: 0.8, x: 0 }}
+          animate={{ opacity: [0.75, 1, 0.75] }}
+          transition={{ repeat: Infinity, duration: 2.4, delay: idx * 0.4, ease: 'easeInOut' }}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -153,12 +144,8 @@ const CheckStepAnimation: React.FC = () => {
 // STEP 3 ANIMATION: CITE (SVG Citation Path Drawing)
 // ============================================================================
 const CiteStepAnimation: React.FC = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
-
   return (
     <div
-      ref={ref}
       style={{
         width: '100%',
         height: '140px',
@@ -190,7 +177,7 @@ const CiteStepAnimation: React.FC = () => {
         </div>
       </div>
 
-      {/* SVG Citation Line Connecting Cards */}
+      {/* SVG Citation Line Connecting Cards (Continuous Loop Drawing) */}
       <svg
         style={{
           position: 'absolute',
@@ -208,9 +195,8 @@ const CiteStepAnimation: React.FC = () => {
           strokeWidth="2.5"
           strokeDasharray="4 4"
           initial={{ pathLength: 0 }}
-          animate={isInView ? { pathLength: 1 } : { pathLength: 0 }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], repeat: Infinity, repeatDelay: 1.5 }}
-          style={{ filter: 'drop-shadow(0 0 6px var(--color-stamp-red))' }}
+          animate={{ pathLength: [0, 1] }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], repeat: Infinity, repeatDelay: 1.2 }}
         />
         {/* End Pin Dots */}
         <circle cx="115" cy="70" r="3.5" fill="var(--color-stamp-red)" />
@@ -241,12 +227,8 @@ const CiteStepAnimation: React.FC = () => {
 // STEP 4 ANIMATION: DECIDE (Rubber Stamp Slam Impact)
 // ============================================================================
 const DecideStepAnimation: React.FC = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
-
   return (
     <div
-      ref={ref}
       style={{
         width: '100%',
         height: '140px',
@@ -283,17 +265,19 @@ const DecideStepAnimation: React.FC = () => {
         <div style={{ height: '3px', width: '80%', backgroundColor: '#e2dacf', borderRadius: '1px' }} />
         <div style={{ height: '3px', width: '60%', backgroundColor: '#e2dacf', borderRadius: '1px' }} />
 
-        {/* Rubber Stamp Slam Impact */}
+        {/* Rubber Stamp Slam Impact (Periodic Loop) */}
         <motion.div
-          initial={{ opacity: 0, scale: 2.3, rotate: -18 }}
-          animate={
-            isInView
-              ? { opacity: 1, scale: 1, rotate: -4 }
-              : { opacity: 0, scale: 2.3, rotate: -18 }
-          }
+          animate={{
+            scale: [2.2, 1, 1, 1],
+            rotate: [-18, -4, -4, -4],
+            opacity: [0, 1, 1, 1]
+          }}
           transition={{
-            ...springs.snappy,
-            delay: 0.25
+            repeat: Infinity,
+            duration: 2.8,
+            times: [0, 0.25, 0.85, 1],
+            repeatDelay: 1.2,
+            ease: [0.16, 1, 0.3, 1]
           }}
           style={{
             position: 'absolute',
@@ -323,12 +307,8 @@ const DecideStepAnimation: React.FC = () => {
 // STEP 5 ANIMATION: REMEMBER (Card Filing into Archival Folder)
 // ============================================================================
 const RememberStepAnimation: React.FC = () => {
-  const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: false, margin: '-20px' });
-
   return (
     <div
-      ref={ref}
       style={{
         width: '100%',
         height: '140px',
@@ -368,17 +348,18 @@ const RememberStepAnimation: React.FC = () => {
         </div>
       </div>
 
-      {/* Precedent Card Filing into Folder */}
+      {/* Precedent Card Filing into Folder (Periodic Loop) */}
       <motion.div
-        animate={
-          isInView
-            ? { y: [-35, 12], rotate: [-6, 0], opacity: [0.7, 1] }
-            : { y: -35, rotate: -6, opacity: 0.7 }
-        }
+        animate={{
+          y: [-35, 12, 12, -35],
+          rotate: [-6, 0, 0, -6],
+          opacity: [0.7, 1, 1, 0.7]
+        }}
         transition={{
           repeat: Infinity,
-          repeatDelay: 1.8,
-          duration: 1.4,
+          duration: 2.6,
+          times: [0, 0.45, 0.8, 1],
+          repeatDelay: 1.2,
           ease: [0.16, 1, 0.3, 1]
         }}
         style={{
@@ -482,11 +463,7 @@ export const HowParakhWorks: React.FC = () => {
     >
       {/* Section Header */}
       <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+        <div
           style={{
             fontFamily: 'var(--font-mono)',
             fontSize: '0.75rem',
@@ -497,13 +474,9 @@ export const HowParakhWorks: React.FC = () => {
           }}
         >
           // ARCHITECTURE & AUDIT LIFECYCLE
-        </motion.div>
+        </div>
 
-        <motion.h2
-          initial={{ opacity: 0, y: 14 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+        <h2
           style={{
             fontFamily: 'var(--font-serif)',
             fontSize: 'clamp(1.8rem, 3.5vw, 2.4rem)',
@@ -513,13 +486,9 @@ export const HowParakhWorks: React.FC = () => {
           }}
         >
           How Parakh Works
-        </motion.h2>
+        </h2>
 
-        <motion.p
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+        <p
           style={{
             fontSize: '0.92rem',
             color: 'var(--color-steel)',
@@ -529,7 +498,7 @@ export const HowParakhWorks: React.FC = () => {
           }}
         >
           From unvetted creative copy to immutable brand precedent in five deterministic steps.
-        </motion.p>
+        </p>
       </div>
 
       {/* Step Cards with Connected Scroll Rail */}
@@ -564,16 +533,12 @@ export const HowParakhWorks: React.FC = () => {
         />
 
         {/* 5 Distinct Steps */}
-        {STEPS.map((step, idx) => {
+        {STEPS.map((step) => {
           const AnimationComponent = step.Animation;
 
           return (
-            <motion.div
+            <div
               key={step.id}
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-40px' }}
-              transition={{ duration: 0.55, delay: idx * 0.08, ease: [0.16, 1, 0.3, 1] }}
               style={{
                 display: 'grid',
                 gridTemplateColumns: '56px 1fr',
@@ -658,7 +623,7 @@ export const HowParakhWorks: React.FC = () => {
                 {/* Step Bespoke Motion Graphic */}
                 <AnimationComponent />
               </div>
-            </motion.div>
+            </div>
           );
         })}
       </div>

@@ -272,13 +272,3 @@ html, body {
   100% { transform: translate(15px, -20px) scale(1); }
 }
 
-/* Reduced Motion Preference Fallbacks */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
-
