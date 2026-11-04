@@ -55,10 +55,9 @@ export default function App() {
   const [targetVaultName, setTargetVaultName] = useState('');
   const [pendingVaultId, setPendingVaultId] = useState<string | null>(null);
 
-  // Gov Core Scan Result & Hero Spotlight State
+  // Gov Core Scan Result & Hero Ref
   const [scanResult, setScanResult] = useState<'green' | 'amber' | 'red' | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
-  const [spotlightPos, setSpotlightPos] = useState({ x: 390, y: 220 });
 
 
   // Listen for Supabase Auth state
@@ -213,10 +212,10 @@ export default function App() {
                 onMouseMove={e => {
                   if (!heroRef.current) return;
                   const rect = heroRef.current.getBoundingClientRect();
-                  setSpotlightPos({
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top
-                  });
+                  const x = e.clientX - rect.left;
+                  const y = e.clientY - rect.top;
+                  heroRef.current.style.setProperty('--spotlight-x', `${x}px`);
+                  heroRef.current.style.setProperty('--spotlight-y', `${y}px`);
                 }}
                 style={{
                   position: 'relative',
@@ -229,21 +228,21 @@ export default function App() {
                   flexDirection: 'column',
                   alignItems: 'center',
                   overflow: 'hidden',
-                  background: `radial-gradient(650px circle at ${spotlightPos.x}px ${spotlightPos.y}px, rgba(215, 38, 61, 0.09), rgba(255, 214, 10, 0.04) 45%, transparent 75%)`,
+                  background: 'radial-gradient(650px circle at var(--spotlight-x, 50%) var(--spotlight-y, 35%), rgba(215, 38, 61, 0.08), rgba(255, 214, 10, 0.03) 40%, transparent 70%)',
                   border: '1px solid var(--color-docket-border)',
                   boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5)'
                 }}
               >
-                {/* Slow-Drifting Paper Grain Texture Overlay */}
+                {/* Lightweight Tactile Grid Texture */}
                 <div
                   style={{
                     position: 'absolute',
-                    inset: '-50px',
+                    inset: 0,
                     pointerEvents: 'none',
-                    opacity: 0.16,
+                    opacity: 0.35,
                     zIndex: 0,
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E")`,
-                    animation: 'paperGrainDrift 36s ease-in-out infinite alternate'
+                    backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px)',
+                    backgroundSize: '20px 20px'
                   }}
                 />
 

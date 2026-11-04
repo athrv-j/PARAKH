@@ -27,7 +27,7 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
   const [flashColor, setFlashColor] = useState<string | null>(null);
   const prevScanningRef = useRef(isScanning);
 
-  // 3D tilt tracking toward cursor
+  // High-performance 3D tilt tracking toward cursor (MotionValues: ZERO React re-renders)
   const mouseX = useMotionValue(0.5);
   const mouseY = useMotionValue(0.5);
 
@@ -59,7 +59,7 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
     mouseY.set(0.5);
   };
 
-  // Determine current core color
+  // Color mapping
   const effectiveResult = scanResult || (
     status === 'verified'
       ? 'green'
@@ -72,7 +72,7 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
 
   const resultColor =
     effectiveResult === 'green'
-      ? 'var(--color-verified)'
+      ? 'var(--color-verified-green)'
       : effectiveResult === 'amber'
       ? 'var(--color-highlighter)'
       : effectiveResult === 'red'
@@ -85,7 +85,7 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
   useEffect(() => {
     if (prevScanningRef.current && !activeScanning && effectiveResult) {
       setFlashColor(resultColor);
-      const timer = setTimeout(() => setFlashColor(null), 1500);
+      const timer = setTimeout(() => setFlashColor(null), 1400);
       return () => clearTimeout(timer);
     }
     prevScanningRef.current = activeScanning;
@@ -94,18 +94,16 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
   // Click triggers outward expanding ripple pulse
   const handleClick = () => {
     const id = Date.now();
-    setRipples(prev => [...prev.slice(-3), { id, timestamp: id }]);
+    setRipples(prev => [...prev.slice(-2), { id, timestamp: id }]);
     setTimeout(() => {
       setRipples(prev => prev.filter(r => r.id !== id));
-    }, 1200);
+    }, 1100);
 
     if (onClick) onClick();
   };
 
-  // Inward particles during scanning state (12 radial streams)
-  const inwardParticles = [
-    0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330
-  ];
+  // Inward particles during scanning state (8 radial streams)
+  const inwardParticles = [0, 45, 90, 135, 180, 225, 270, 315];
 
   const numericSize = typeof size === 'number' ? size : 240;
 
@@ -127,7 +125,7 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        perspective: 900,
+        perspective: 800,
         userSelect: 'none',
         margin: '0 auto',
         ...style
@@ -151,32 +149,23 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
           style={{
             width: '100%',
             height: '100%',
-            overflow: 'visible',
-            filter: `drop-shadow(0 0 24px ${flashColor || resultColor}44)`,
-            transition: 'filter 0.5s ease'
+            overflow: 'visible'
           }}
         >
           <defs>
             {/* Core Radial Breathing Glow */}
             <radialGradient id="govCoreGlow" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor={flashColor || resultColor} stopOpacity="0.85" />
-              <stop offset="50%" stopColor={flashColor || resultColor} stopOpacity="0.25" />
+              <stop offset="60%" stopColor={flashColor || resultColor} stopOpacity="0.2" />
               <stop offset="100%" stopColor="transparent" stopOpacity="0" />
             </radialGradient>
 
             {/* Radar Scan Gradient */}
             <linearGradient id="radarSweepGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stopColor="var(--color-stamp-red)" stopOpacity="0.8" />
+              <stop offset="0%" stopColor="var(--color-stamp-red)" stopOpacity="0.75" />
               <stop offset="70%" stopColor="var(--color-stamp-red)" stopOpacity="0.1" />
               <stop offset="100%" stopColor="transparent" stopOpacity="0" />
             </linearGradient>
-
-            {/* Ripple Pulse Gradient */}
-            <radialGradient id="rippleGrad" cx="50%" cy="50%" r="50%">
-              <stop offset="70%" stopColor="transparent" />
-              <stop offset="90%" stopColor={resultColor} stopOpacity="0.8" />
-              <stop offset="100%" stopColor="transparent" />
-            </radialGradient>
           </defs>
 
           {/* ============================================================== */}
@@ -187,14 +176,13 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
               <motion.circle
                 cx="160"
                 cy="160"
-                initial={{ r: 35, opacity: 1, scale: 0.8 }}
-                animate={{ r: 155, opacity: 0, scale: 1.35 }}
+                initial={{ r: 30, opacity: 1 }}
+                animate={{ r: 145, opacity: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.9, ease: 'easeOut' }}
+                transition={{ duration: 0.85, ease: 'easeOut' }}
                 fill="none"
                 stroke={flashColor}
-                strokeWidth="5"
-                style={{ filter: `drop-shadow(0 0 20px ${flashColor})` }}
+                strokeWidth="4"
               />
             )}
           </AnimatePresence>
@@ -207,9 +195,9 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
               key={r.id}
               cx="160"
               cy="160"
-              initial={{ r: 32, opacity: 0.9, strokeWidth: 3 }}
-              animate={{ r: 150, opacity: 0, strokeWidth: 1 }}
-              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1] }}
+              initial={{ r: 28, opacity: 0.9, strokeWidth: 3 }}
+              animate={{ r: 145, opacity: 0, strokeWidth: 1 }}
+              transition={{ duration: 1.0, ease: [0.16, 1, 0.3, 1] }}
               fill="none"
               stroke={resultColor}
               style={{ pointerEvents: 'none' }}
@@ -218,143 +206,139 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
 
           {/* ============================================================== */}
           {/* 1. OUTER GEAR / GRADUATION RING                                */}
-          {/* Clockwise: normal 32s, hover 7s                                */}
+          {/* Concentric around 160, 160: Clockwise                          */}
           {/* ============================================================== */}
           <g
+            className="gov-orbit-outer"
             style={{
-              transformOrigin: '160px 160px',
-              animation: `govSpinClockwise ${isHovered ? '7s' : '32s'} linear infinite`
+              animationDuration: isHovered ? '6s' : '28s'
             }}
           >
             {/* Outer track */}
             <circle
               cx="160"
               cy="160"
-              r="140"
+              r="138"
               fill="none"
               stroke="var(--color-docket-border)"
               strokeWidth="1.5"
               strokeDasharray="4 6"
-              opacity="0.7"
+              opacity="0.65"
             />
             {/* Perimeter Degree Graduation Ticks */}
             {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map(deg => (
               <rect
                 key={deg}
                 x="158.5"
-                y="14"
+                y="16"
                 width="3"
-                height="10"
+                height="9"
                 fill={deg % 90 === 0 ? resultColor : 'var(--color-steel)'}
-                opacity={deg % 90 === 0 ? 0.9 : 0.45}
+                opacity={deg % 90 === 0 ? 0.9 : 0.4}
                 transform={`rotate(${deg} 160 160)`}
               />
             ))}
           </g>
 
           {/* ============================================================== */}
-          {/* 2. MIDDLE ORBITAL TRACK & ORBITING NODES                       */}
-          {/* Counter-Clockwise: normal 20s, hover 5s                        */}
+          {/* 2. MIDDLE ORBITAL TRACK & 4 ORBITING NODES                     */}
+          {/* Concentric around 160, 160: Counter-Clockwise                  */}
           {/* ============================================================== */}
           <g
+            className="gov-orbit-middle"
             style={{
-              transformOrigin: '160px 160px',
-              animation: `govSpinCounter ${isHovered ? '5s' : '20s'} linear infinite`
+              animationDuration: isHovered ? '5s' : '20s'
             }}
           >
             <circle
               cx="160"
               cy="160"
-              r="110"
+              r="108"
               fill="none"
               stroke={resultColor}
               strokeWidth="1.5"
-              strokeDasharray="18 10 4 10"
+              strokeDasharray="16 10 4 10"
               opacity="0.8"
             />
-            {/* 4 Orbiting Satellite Dots on Track */}
-            <circle cx="160" cy="50" r="5" fill="var(--color-stamp-red)" style={{ filter: 'drop-shadow(0 0 6px var(--color-stamp-red))' }} />
-            <circle cx="270" cy="160" r="5" fill="var(--color-highlighter)" style={{ filter: 'drop-shadow(0 0 6px var(--color-highlighter))' }} />
-            <circle cx="160" cy="270" r="5" fill="var(--color-verified)" style={{ filter: 'drop-shadow(0 0 6px var(--color-verified))' }} />
-            <circle cx="50" cy="160" r="5" fill="var(--color-paper-light)" style={{ filter: 'drop-shadow(0 0 4px var(--color-paper-light))' }} />
+            {/* 4 Cardinal Orbiting Nodes with High Contrast */}
+            <circle cx="160" cy="52" r="5" fill="var(--color-stamp-red)" />
+            <circle cx="268" cy="160" r="5" fill="var(--color-highlighter)" />
+            <circle cx="160" cy="268" r="5" fill="var(--color-verified-green)" />
+            <circle cx="52" cy="160" r="5" fill="var(--color-paper-light)" />
           </g>
 
           {/* ============================================================== */}
-          {/* 3. TILTED ELLIPTICAL ORBITAL RING                              */}
-          {/* Clockwise: normal 14s, hover 3.5s                              */}
+          {/* 3. CENTERED ELLIPTICAL ORBITAL RING                            */}
+          {/* Perfectly concentric at cx="160" cy="160", tilted 30 deg       */}
           {/* ============================================================== */}
-          <g
-            transform="rotate(35 160 160)"
-            style={{
-              transformOrigin: '160px 160px',
-              animation: `govSpinClockwise ${isHovered ? '3.5s' : '14s'} linear infinite`
-            }}
-          >
-            <ellipse
-              cx="160"
-              cy="160"
-              rx="88"
-              ry="42"
-              fill="none"
-              stroke="var(--color-paper-worn)"
-              strokeWidth="1.2"
-              opacity="0.65"
-              strokeDasharray="12 6"
-            />
-            {/* Elliptical Satellite Node */}
-            <circle cx="72" cy="160" r="4" fill="var(--color-highlighter)" />
-            <circle cx="248" cy="160" r="4" fill="var(--color-stamp-red)" />
+          <g transform="rotate(30 160 160)">
+            <g
+              className="gov-orbit-middle"
+              style={{
+                animationDuration: isHovered ? '3.5s' : '15s'
+              }}
+            >
+              <ellipse
+                cx="160"
+                cy="160"
+                rx="86"
+                ry="46"
+                fill="none"
+                stroke="var(--color-paper-worn)"
+                strokeWidth="1.2"
+                opacity="0.6"
+                strokeDasharray="8 6"
+              />
+              {/* Elliptical Satellite Nodes */}
+              <circle cx="74" cy="160" r="4" fill="var(--color-highlighter)" />
+              <circle cx="246" cy="160" r="4" fill="var(--color-stamp-red)" />
+            </g>
           </g>
 
           {/* ============================================================== */}
-          {/* 4. INNER RETICLE RING                                          */}
-          {/* Counter-Clockwise: normal 9s, hover 2.5s                       */}
+          {/* 4. INNER RETICLE PRECISION RING                                */}
+          {/* Concentric around 160, 160                                     */}
           {/* ============================================================== */}
           <g
+            className="gov-orbit-outer"
             style={{
-              transformOrigin: '160px 160px',
-              animation: `govSpinCounter ${isHovered ? '2.5s' : '9s'} linear infinite`
+              animationDuration: isHovered ? '3s' : '11s'
             }}
           >
             <circle
               cx="160"
               cy="160"
-              r="68"
+              r="66"
               fill="none"
               stroke="var(--color-docket-border)"
               strokeWidth="1"
-              strokeDasharray="8 6"
+              strokeDasharray="6 6"
+              opacity="0.75"
             />
-            <rect x="159" y="94" width="2" height="6" fill="var(--color-steel)" />
-            <rect x="159" y="220" width="2" height="6" fill="var(--color-steel)" />
-            <rect x="94" y="159" width="6" height="2" fill="var(--color-steel)" />
-            <rect x="220" y="159" width="6" height="2" fill="var(--color-steel)" />
+            <rect x="159" y="90" width="2" height="6" fill="var(--color-steel)" />
+            <rect x="159" y="224" width="2" height="6" fill="var(--color-steel)" />
+            <rect x="90" y="159" width="6" height="2" fill="var(--color-steel)" />
+            <rect x="224" y="159" width="6" height="2" fill="var(--color-steel)" />
           </g>
 
           {/* ============================================================== */}
           {/* SCANNING STATE: RADAR SWEEP LINE & INWARD PARTICLES            */}
           {/* ============================================================== */}
           {activeScanning && (
-            <g style={{ transformOrigin: '160px 160px' }}>
+            <g>
               {/* Radar Sweep Wedge Beam */}
-              <g
-                style={{
-                  transformOrigin: '160px 160px',
-                  animation: 'radarSweep 1.6s linear infinite'
-                }}
-              >
+              <g className="gov-radar-sweep">
                 <path
-                  d="M 160 160 L 160 22 A 138 138 0 0 1 257 63 Z"
+                  d="M 160 160 L 160 24 A 136 136 0 0 1 256 64 Z"
                   fill="url(#radarSweepGrad)"
                 />
                 <line
                   x1="160"
                   y1="160"
                   x2="160"
-                  y2="20"
+                  y2="22"
                   stroke="var(--color-stamp-red)"
                   strokeWidth="2.5"
-                  style={{ filter: 'drop-shadow(0 0 8px var(--color-stamp-red))' }}
                 />
               </g>
 
@@ -368,17 +352,16 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
                     fill="var(--color-highlighter)"
                     initial={{ cy: 25, opacity: 0 }}
                     animate={{
-                      cy: [25, 130],
-                      opacity: [0, 0.9, 0],
+                      cy: [25, 135],
+                      opacity: [0, 0.95, 0],
                       scale: [1.2, 0.6]
                     }}
                     transition={{
                       repeat: Infinity,
                       duration: 1.1,
-                      delay: i * 0.09,
+                      delay: i * 0.12,
                       ease: 'easeInOut'
                     }}
-                    style={{ filter: 'drop-shadow(0 0 6px var(--color-highlighter))' }}
                   />
                 </g>
               ))}
@@ -408,24 +391,13 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
           {/* ============================================================== */}
           {/* CENTER SEAL EMBLEM & LOCK BEZEL                                */}
           {/* ============================================================== */}
-          <motion.circle
+          <circle
             cx="160"
             cy="160"
             r="28"
             fill="#0c0d10"
             stroke={flashColor || resultColor}
-            strokeWidth="2"
-            animate={{
-              scale: activeScanning ? [1, 1.08, 1] : 1
-            }}
-            transition={{
-              repeat: activeScanning ? Infinity : 0,
-              duration: 0.8
-            }}
-            style={{
-              transformOrigin: '160px 160px',
-              filter: `drop-shadow(0 0 8px ${flashColor || resultColor})`
-            }}
+            strokeWidth="2.5"
           />
 
           {/* Case Seal Inscription */}
@@ -478,8 +450,26 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
           : `GOV CORE // ${status.toUpperCase()}`}
       </div>
 
-      {/* Standardized CSS Keyframes for Performance Hardware Acceleration */}
+      {/* Hardware-Accelerated CSS Keyframes */}
       <style>{`
+        .gov-orbit-outer {
+          transform-box: view-box;
+          transform-origin: 160px 160px;
+          animation: govSpinClockwise linear infinite;
+          will-change: transform;
+        }
+        .gov-orbit-middle {
+          transform-box: view-box;
+          transform-origin: 160px 160px;
+          animation: govSpinCounter linear infinite;
+          will-change: transform;
+        }
+        .gov-radar-sweep {
+          transform-box: view-box;
+          transform-origin: 160px 160px;
+          animation: govSpinClockwise 1.6s linear infinite;
+          will-change: transform;
+        }
         @keyframes govSpinClockwise {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
@@ -487,10 +477,6 @@ export const GovernanceGyroscope: React.FC<GovernanceGyroscopeProps> = ({
         @keyframes govSpinCounter {
           from { transform: rotate(360deg); }
           to { transform: rotate(0deg); }
-        }
-        @keyframes radarSweep {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
