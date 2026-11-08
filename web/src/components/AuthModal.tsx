@@ -36,6 +36,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
 
   if (!isOpen) return null;
 
+  const handleDemoSignIn = () => {
+    const demoUser = {
+      id: 'demo-reviewer-01',
+      email: 'lead.reviewer@agency.com',
+      user_metadata: { role: 'reviewer', name: 'Lead Brand Reviewer' }
+    };
+    setCurrentUser(demoUser);
+    if (onAuthStateChange) onAuthStateChange(demoUser);
+    setSuccessMessage('✓ Logged in as Demo Lead Reviewer!');
+    setTimeout(onClose, 800);
+  };
+
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -43,7 +55,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
     const client = getSupabase();
 
     if (!client) {
-      setErrorMessage('Supabase is not configured. Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.');
+      setErrorMessage('Supabase Cloud is not configured on this instance. Click "Continue as Demo Reviewer" below to test authenticated workflows.');
       return;
     }
 
@@ -283,6 +295,29 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
                 style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}
               >
                 {loading ? 'Authenticating...' : isSignUp ? 'Register with Supabase' : 'Sign In with Supabase'}
+              </button>
+
+              <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-docket-border)' }} />
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-steel)', fontFamily: 'var(--font-mono)' }}>OR QUICK DEMO</span>
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-docket-border)' }} />
+              </div>
+
+              <button
+                type="button"
+                onClick={handleDemoSignIn}
+                className="btn"
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  fontSize: '0.88rem',
+                  fontWeight: 600,
+                  backgroundColor: 'rgba(255, 214, 10, 0.1)',
+                  border: '1px solid var(--color-highlighter)',
+                  color: 'var(--color-highlighter)'
+                }}
+              >
+                ⚡ Continue as Demo Reviewer (No Password Needed)
               </button>
             </form>
           )}
