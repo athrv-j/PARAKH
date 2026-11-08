@@ -1,0 +1,107 @@
+[
+  {
+    "id": "F-VYA-01",
+    "label": "RBI Partner NBFCs Count",
+    "value": "14 RBI-registered lending partners",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-02",
+    "label": "Welcome Zero Platform Fee Promo",
+    "value": "0% platform fee for the first 30 days",
+    "valid_from": "2026-10-01",
+    "valid_until": "2026-11-15"
+  },
+  {
+    "id": "F-VYA-03",
+    "label": "GST Invoice Verification Speed",
+    "value": "Under 3 seconds via GSTN API",
+    "valid_from": "2026-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-VYA-04",
+    "label": "Maximum Working Capital Credit",
+    "value": "Up to ₹50 Lakhs collateral-free",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-05",
+    "label": "Security Certification",
+    "value": "ISO/IEC 27001:2022 certified architecture",
+    "valid_from": "2025-05-01",
+    "valid_until": "2028-05-01"
+  },
+  {
+    "id": "F-VYA-06",
+    "label": "Annual Percentage Rate (APR) Floor",
+    "value": "Starting from 11.5% per annum",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-07",
+    "label": "MSME Onboarded Count",
+    "value": "Over 85,000 verified small businesses",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-08",
+    "label": "Disbursement Turnaround Time",
+    "value": "Within 24 to 48 hours post document submission",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-09",
+    "label": "Payment Gateway Partner",
+    "value": "Razorpay & Cashfree banking rails",
+    "valid_from": "2025-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-VYA-10",
+    "label": "Quarterly Audit Compliance",
+    "value": "SOC 2 Type II compliant",
+    "valid_from": "2025-06-01",
+    "valid_until": "2027-06-01"
+  },
+  {
+    "id": "F-VYA-11",
+    "label": "Diwali Vyapar Bonanza Cashback",
+    "value": "Flat ₹2,500 cashback on ₹10L+ credit",
+    "valid_from": "2026-10-20",
+    "valid_until": "2026-11-10"
+  },
+  {
+    "id": "F-VYA-12",
+    "label": "Minimum Business Vintage Required",
+    "value": "12 months of active GST returns",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-13",
+    "label": "Supported Regional Languages",
+    "value": "Hindi, Gujarati, Marathi, Tamil, Telugu, and English",
+    "valid_from": "2026-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-VYA-14",
+    "label": "Monthly Processed Volume",
+    "value": "₹180 Crores in trade receivables",
+    "valid_from": "2026-05-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-VYA-15",
+    "label": "Direct GST Filing Software Price",
+    "value": "₹199 per month for micro-enterprises",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  }
+]

@@ -1,0 +1,88 @@
+[
+  {
+    "scenario_id": "SCENARIO-01",
+    "client_id": "client_kavach",
+    "fact_id": "F-KAV-02",
+    "fact_label": "Diwali Wellness Camp Price",
+    "current_value": "₹899",
+    "current_valid_until": "2026-11-05",
+    "updated_value": "₹999",
+    "updated_valid_until": "2026-11-20",
+    "reason": "Campaign extended post-Diwali with revised diagnostic biomarker additions.",
+    "expected_impact": {
+      "affected_creative_assets": 2,
+      "asset_ids": [
+        "D-02",
+        "D-03"
+      ],
+      "channels": [
+        "email",
+        "print"
+      ]
+    }
+  },
+  {
+    "scenario_id": "SCENARIO-02",
+    "client_id": "client_kavach",
+    "fact_id": "F-KAV-01",
+    "fact_label": "Basic Health Checkup Price",
+    "current_value": "₹499",
+    "current_valid_until": "2026-12-31",
+    "updated_value": "₹549",
+    "updated_valid_until": "2027-03-31",
+    "reason": "Annual price revision reflecting new NABL laboratory testing reagent costs.",
+    "expected_impact": {
+      "affected_creative_assets": 1,
+      "asset_ids": [
+        "D-01"
+      ],
+      "channels": [
+        "social"
+      ]
+    }
+  },
+  {
+    "scenario_id": "SCENARIO-03",
+    "client_id": "client_vyapar",
+    "fact_id": "F-VYA-02",
+    "fact_label": "Welcome Zero Platform Fee Promo",
+    "current_value": "0% platform fee for the first 30 days",
+    "current_valid_until": "2026-11-15",
+    "updated_value": "0% platform fee for the first 45 days",
+    "updated_valid_until": "2026-12-15",
+    "reason": "Merchant festive onboarding window extended across all Tier 2 manufacturing hubs.",
+    "expected_impact": {
+      "affected_creative_assets": 3,
+      "asset_ids": [
+        "DRAFT-VIOLATION-05",
+        "DRAFT-CLEAN-04",
+        "DRAFT-CLEAN-05"
+      ],
+      "channels": [
+        "social",
+        "email"
+      ]
+    }
+  },
+  {
+    "scenario_id": "SCENARIO-04",
+    "client_id": "client_mitti",
+    "fact_id": "F-MIT-02",
+    "fact_label": "Festive Saffron Glow Box Price",
+    "current_value": "₹1,499",
+    "current_valid_until": "2026-11-12",
+    "updated_value": "₹1,699",
+    "updated_valid_until": "2026-11-30",
+    "reason": "High demand for GI-Tagged Kashmiri Saffron harvest packaging.",
+    "expected_impact": {
+      "affected_creative_assets": 2,
+      "asset_ids": [
+        "DRAFT-VIOLATION-09",
+        "DRAFT-VIOLATION-10"
+      ],
+      "channels": [
+        "social"
+      ]
+    }
+  }
+]

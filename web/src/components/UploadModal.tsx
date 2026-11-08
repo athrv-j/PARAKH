@@ -34,13 +34,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
   // New Client Vault state
   const [newClientName, setNewClientName] = useState('');
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [modalSuccess, setModalSuccess] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const handleDraftSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (!draftTitle.trim() || !draftText.trim()) {
-      alert('Please enter both title and draft copy.');
+      setModalError('Please enter both title and draft copy.');
       return;
     }
 
@@ -58,7 +61,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to submit draft: ${response.statusText}`);
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.message || `Failed to submit draft: ${response.statusText}`);
       }
 
       const data = await response.json();
@@ -67,7 +71,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       setDraftText('');
       onClose();
     } catch (err: any) {
-      alert(`Error submitting draft: ${err.message}`);
+      setModalError(err.message || 'Error submitting draft for evaluation');
     } finally {
       setIsSubmitting(false);
     }
@@ -75,6 +79,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
   const handleGuidelineSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
+    setModalSuccess(null);
     setIsSubmitting(true);
     try {
       let response: Response;
@@ -88,7 +94,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         });
       } else {
         if (!guidelineText.trim()) {
-          alert('Please upload a guideline file or paste guideline text.');
+          setModalError('Please upload a guideline file (.docx/.md) or paste guideline text.');
           setIsSubmitting(false);
           return;
         }
@@ -100,17 +106,18 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       }
 
       if (!response.ok) {
-        throw new Error(`Failed to import guidelines: ${response.statusText}`);
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.message || `Failed to import guidelines: ${response.statusText}`);
       }
 
       const data = await response.json();
-      alert(`✓ Successfully imported ${data.imported.clausesCount} clauses, ${data.imported.termsCount} terms, and ${data.imported.factsCount} facts!`);
+      setModalSuccess(`✓ Successfully imported ${data.imported.clausesCount} clauses, ${data.imported.termsCount} terms, and ${data.imported.factsCount} facts!`);
       onGuidelinesImported(data.imported);
       setGuidelineText('');
       setSelectedFile(null);
-      onClose();
+      setTimeout(onClose, 1200);
     } catch (err: any) {
-      alert(`Error importing guidelines: ${err.message}`);
+      setModalError(err.message || 'Error importing guidelines');
     } finally {
       setIsSubmitting(false);
     }
@@ -118,6 +125,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
   const handleCreateClient = async (e: React.FormEvent) => {
     e.preventDefault();
+    setModalError(null);
     if (!newClientName.trim()) return;
 
     const id = `client_${newClientName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
@@ -129,14 +137,15 @@ export const UploadModal: React.FC<UploadModalProps> = ({
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create client vault: ${response.statusText}`);
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.message || `Failed to create client vault: ${response.statusText}`);
       }
 
       onClientCreated({ id, name: newClientName });
       setNewClientName('');
       onClose();
     } catch (err: any) {
-      alert(`Error creating client: ${err.message}`);
+      setModalError(err.message || 'Error creating client vault');
     }
   };
 
@@ -190,6 +199,47 @@ export const UploadModal: React.FC<UploadModalProps> = ({
             ×
           </button>
         </div>
+
+        {modalError && (
+          <div
+            style={{
+              backgroundColor: 'rgba(215, 38, 61, 0.12)',
+              border: '1px solid var(--color-stamp-red)',
+              color: 'var(--color-stamp-red)',
+              padding: '0.65rem 1rem',
+              borderRadius: '4px',
+              fontSize: '0.85rem',
+              marginBottom: '1rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}
+          >
+            <span>⚠️ {modalError}</span>
+            <button
+              onClick={() => setModalError(null)}
+              style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', fontSize: '1.1rem' }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {modalSuccess && (
+          <div
+            style={{
+              backgroundColor: 'rgba(47, 191, 113, 0.12)',
+              border: '1px solid var(--color-verified-green)',
+              color: 'var(--color-verified-green)',
+              padding: '0.65rem 1rem',
+              borderRadius: '4px',
+              fontSize: '0.85rem',
+              marginBottom: '1rem'
+            }}
+          >
+            {modalSuccess}
+          </div>
+        )}
 
         {/* Tab Switcher */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid #d8d2c6', paddingBottom: '0.75rem' }}>

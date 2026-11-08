@@ -6,10 +6,11 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
+    "build": "tsc && node -e \"fs.mkdirSync('dist/db', {recursive: true}); fs.copyFileSync('src/db/schema.sql', 'dist/db/schema.sql')\"",
     "start": "node dist/index.js",
     "test": "vitest",
-    "test:run": "vitest run",
+    "test:run": "vitest run --fileParallelism=false",
+    "seed:sample": "tsx src/scripts/seedSampleData.ts",
     "eval": "tsx src/scripts/evaluate.ts"
   },
   "dependencies": {

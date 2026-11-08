@@ -5,14 +5,28 @@ import path from 'node:path';
 import fs from 'node:fs';
 import apiRouter from './routes/index.js';
 import { runMigrations } from './db/index.js';
+import { requestTimeout } from './middleware/timeout.js';
+import { generalRateLimiter } from './middleware/rateLimiter.js';
 
 dotenv.config();
+
+// Process-level resilience: prevent server crashes from unhandled rejections or exceptions
+process.on('uncaughtException', (err) => {
+  console.error('CRITICAL: Process caught unhandled exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('CRITICAL: Process caught unhandled rejection at:', promise, 'reason:', reason);
+});
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json());
+
+// Resilience: Request Timeouts & General Rate Limiting
+app.use(requestTimeout(30000)); // 30s timeout
+app.use(generalRateLimiter.middleware());
 
 // Run SQLite migrations on startup
 try {
@@ -43,10 +57,15 @@ if (webDistPath) {
   console.log(`✓ Serving Parakh frontend UI from: ${webDistPath}`);
 }
 
-// Fallback error handler
+// Fallback centralized error handler (Hides raw database/driver internals in production)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled server error:', err);
-  res.status(500).json({ error: 'InternalServerError', message: err.message });
+  const status = err.status || err.statusCode || 500;
+  const isProd = process.env.NODE_ENV === 'production';
+  res.status(status).json({
+    error: err.name || 'InternalServerError',
+    message: isProd && status === 500 ? 'An unexpected server error occurred.' : err.message
+  });
 });
 
 if (process.env.NODE_ENV !== 'test') {

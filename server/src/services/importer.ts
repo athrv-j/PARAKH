@@ -1,6 +1,69 @@
 import mammoth from 'mammoth';
 import { VaultDb } from '../db/vaultDb.js';
 
+export class InvalidDocumentError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'InvalidDocumentError';
+  }
+}
+
+export class DecompressionBombError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DecompressionBombError';
+  }
+}
+
+/**
+ * Checks for decompression bombs (Zip Bombs) and validates DOCX magic bytes.
+ */
+export function inspectDocxBuffer(buffer: Buffer, maxUncompressedBytes = 25 * 1024 * 1024, maxEntries = 200): void {
+  // 1. Verify ZIP Magic Bytes: PK\x03\x04
+  if (buffer.length < 4 || buffer[0] !== 0x50 || buffer[1] !== 0x4b || buffer[2] !== 0x03 || buffer[3] !== 0x04) {
+    throw new InvalidDocumentError('File signature mismatch. Expected valid OpenXML DOCX archive.');
+  }
+
+  // 2. Scan Central Directory headers (PK\x01\x02) to verify total uncompressed size
+  let offset = 0;
+  let entryCount = 0;
+  let totalUncompressedSize = 0;
+
+  while (offset < buffer.length - 4) {
+    if (buffer.readUInt32LE(offset) === 0x02014b50) {
+      entryCount++;
+      if (entryCount > maxEntries) {
+        throw new DecompressionBombError(`DOCX archive exceeds maximum entry limit (${maxEntries} files).`);
+      }
+      if (offset + 28 <= buffer.length) {
+        const uncompressedSize = buffer.readUInt32LE(offset + 24);
+        totalUncompressedSize += uncompressedSize;
+        if (totalUncompressedSize > maxUncompressedBytes) {
+          throw new DecompressionBombError(
+            `Total uncompressed content (${totalUncompressedSize} bytes) exceeds safe limit of ${maxUncompressedBytes} bytes.`
+          );
+        }
+      }
+      offset += 46;
+    } else {
+      offset++;
+    }
+  }
+}
+
+/**
+ * Validates text buffer for UTF-8 integrity and absence of binary/null bytes.
+ */
+export function inspectTextBuffer(buffer: Buffer, maxBytes = 5 * 1024 * 1024): string {
+  if (buffer.length > maxBytes) {
+    throw new InvalidDocumentError(`Text content exceeds maximum allowed limit of ${maxBytes} bytes.`);
+  }
+  if (buffer.includes(0x00)) {
+    throw new InvalidDocumentError('File contains binary null bytes and is not valid plain text or markdown.');
+  }
+  return buffer.toString('utf-8');
+}
+
 export interface ExtractedKnowledge {
   clauses: Array<{
     id: string;
@@ -23,20 +86,32 @@ export interface ExtractedKnowledge {
 
 export class KnowledgeImporter {
   /**
-   * Extracts raw text from markdown, docx buffer, or plain text.
+   * Safely extracts raw text from markdown, docx buffer, or plain text with bomb & signature inspection.
+   * Catches parsing anomalies and guarantees that bad files never crash the process.
    */
   async extractText(input: Buffer | string, fileType: 'docx' | 'pdf' | 'md' | 'txt'): Promise<string> {
-    if (fileType === 'docx') {
-      const buffer = typeof input === 'string' ? Buffer.from(input) : input;
-      const result = await mammoth.extractRawText({ buffer });
-      return result.value;
-    }
+    try {
+      if (fileType === 'docx') {
+        const buffer = typeof input === 'string' ? Buffer.from(input) : input;
+        inspectDocxBuffer(buffer);
+        const result = await mammoth.extractRawText({ buffer });
+        if (!result.value || !result.value.trim()) {
+          throw new InvalidDocumentError('DOCX file is empty or contains no readable text.');
+        }
+        return result.value;
+      }
 
-    if (typeof input === 'string') {
-      return input;
-    }
+      if (typeof input === 'string') {
+        return input;
+      }
 
-    return input.toString('utf-8');
+      return inspectTextBuffer(input);
+    } catch (err: any) {
+      if (err instanceof InvalidDocumentError || err instanceof DecompressionBombError) {
+        throw err;
+      }
+      throw new InvalidDocumentError(`Failed to parse ${fileType} document safely: ${err.message || 'corrupted document'}`);
+    }
   }
 
   /**

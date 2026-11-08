@@ -114,7 +114,7 @@ export class VaultDb {
 
   // --- Clients (Global administration) ---
   createClient(client: ClientRecord): void {
-    const stmt = this.db.prepare('INSERT INTO clients (id, name) VALUES (?, ?)');
+    const stmt = this.db.prepare('INSERT OR REPLACE INTO clients (id, name) VALUES (?, ?)');
     stmt.run(client.id, client.name);
   }
 
@@ -130,7 +130,7 @@ export class VaultDb {
   insertClause(clientId: string, clause: Omit<ClauseRecord, 'client_id'>): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO clauses (id, client_id, version, category, text, is_active)
+      INSERT OR REPLACE INTO clauses (id, client_id, version, category, text, is_active)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     stmt.run(
@@ -162,7 +162,7 @@ export class VaultDb {
   insertTerm(clientId: string, term: Omit<TermRecord, 'client_id'>): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO terms (id, client_id, term, type, replacement)
+      INSERT OR REPLACE INTO terms (id, client_id, term, type, replacement)
       VALUES (?, ?, ?, ?, ?)
     `);
     stmt.run(term.id, clientId, term.term, term.type, term.replacement || null);
@@ -177,7 +177,7 @@ export class VaultDb {
   insertFact(clientId: string, fact: Omit<FactRecord, 'client_id'>): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO facts (id, client_id, label, value, valid_from, valid_until)
+      INSERT OR REPLACE INTO facts (id, client_id, label, value, valid_from, valid_until)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     stmt.run(fact.id, clientId, fact.label, fact.value, fact.valid_from || null, fact.valid_until || null);
@@ -192,7 +192,7 @@ export class VaultDb {
   insertDraft(clientId: string, draft: Omit<DraftRecord, 'client_id'>): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO drafts (id, client_id, title, channel, status, author)
+      INSERT OR REPLACE INTO drafts (id, client_id, title, channel, status, author)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     stmt.run(draft.id, clientId, draft.title, draft.channel, draft.status, draft.author);
@@ -209,7 +209,7 @@ export class VaultDb {
   ): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO draft_versions (id, draft_id, client_id, version_num, text_content, file_path)
+      INSERT OR REPLACE INTO draft_versions (id, draft_id, client_id, version_num, text_content, file_path)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
     stmt.run(version.id, version.draft_id, clientId, version.version_num, version.text_content, version.file_path || null);
@@ -219,7 +219,7 @@ export class VaultDb {
   insertFinding(clientId: string, finding: Omit<FindingRecord, 'client_id'>): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO findings (
+      INSERT OR REPLACE INTO findings (
         id, version_id, client_id, type, severity, span_start, span_end, span_text,
         source_type, source_id, source_text, model_name, explanation, suggested_fix, status
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -254,7 +254,7 @@ export class VaultDb {
   insertPrecedent(clientId: string, precedent: Omit<PrecedentRecord, 'client_id'>): void {
     assertClientId(clientId);
     const stmt = this.db.prepare(`
-      INSERT INTO precedents (
+      INSERT OR REPLACE INTO precedents (
         id, client_id, clause_id, finding_id, decision, reason, scope, expiry, decided_by, embedding
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);

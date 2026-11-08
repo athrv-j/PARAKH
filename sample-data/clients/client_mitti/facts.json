@@ -1,0 +1,107 @@
+[
+  {
+    "id": "F-MIT-01",
+    "label": "PETA Cruelty Free Certification",
+    "value": "100% Cruelty-Free and Vegan certified by PETA India",
+    "valid_from": "2024-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-MIT-02",
+    "label": "Festive Saffron Glow Box Price",
+    "value": "₹1,499",
+    "valid_from": "2026-10-10",
+    "valid_until": "2026-11-12"
+  },
+  {
+    "id": "F-MIT-03",
+    "label": "Kashmiri Saffron Origin",
+    "value": "Grade A1 GI-Tagged Saffron from Pampore, Kashmir",
+    "valid_from": "2025-01-01",
+    "valid_until": "2028-01-01"
+  },
+  {
+    "id": "F-MIT-04",
+    "label": "Kumkumadi Tailam Night Elixir Price",
+    "value": "₹1,850 for 30ml",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-MIT-05",
+    "label": "Ayush Ministry License Code",
+    "value": "AYUSH-RAJ-MFG-902",
+    "valid_from": "2023-01-01",
+    "valid_until": "2028-01-01"
+  },
+  {
+    "id": "F-MIT-06",
+    "label": "Cold-Pressed Extraction Method",
+    "value": "Zero-heat wood-pressed carrier oils",
+    "valid_from": "2025-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-MIT-07",
+    "label": "Recyclable Glass Packaging Ratio",
+    "value": "92% post-consumer recycled amber glass",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-MIT-08",
+    "label": "Clinical Patch Test Panel",
+    "value": "Dermatologically evaluated on 150 sensitive skin subjects",
+    "valid_from": "2025-08-01",
+    "valid_until": "2027-08-01"
+  },
+  {
+    "id": "F-MIT-09",
+    "label": "Farmer Co-op Partnership Count",
+    "value": "Direct fair-trade partnership with 400+ herb growers in Uttarakhand",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-MIT-10",
+    "label": "Rose Water Source",
+    "value": "Steam-distilled organic Desi Gulab from Kannauj",
+    "valid_from": "2025-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-MIT-11",
+    "label": "Starter Mini Kit Price",
+    "value": "₹649 for 3 essential minis",
+    "valid_from": "2026-02-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-MIT-12",
+    "label": "Paraben & Sulphate Free Guarantee",
+    "value": "Formulated strictly without parabens, phthalates, or SLS",
+    "valid_from": "2024-01-01",
+    "valid_until": "2028-01-01"
+  },
+  {
+    "id": "F-MIT-13",
+    "label": "Free Delivery Threshold",
+    "value": "Complimentary shipping on orders above ₹899",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-MIT-14",
+    "label": "Customer Repeat Purchase Rate",
+    "value": "68% repeat purchase within 90 days",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-MIT-15",
+    "label": "Ubtan Exfoliating Clay Mask Price",
+    "value": "₹750 for 100g",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  }
+]

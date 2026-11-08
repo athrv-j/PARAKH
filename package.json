@@ -11,8 +11,10 @@
     "dev:server": "npm run dev --prefix server",
     "dev:web": "npm run dev --prefix web",
     "build": "npm run build --workspace=server && npm run build --workspace=web",
+    "start": "node server/dist/index.js",
     "test": "npm run test --workspace=server",
     "test:run": "npm run test:run --workspace=server",
+    "seed:sample": "npm run seed:sample --workspace=server",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
   },

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { CaseFileSkeletonShimmer } from './CaseFileSkeletonShimmer.tsx';
 
 interface InteractiveUploadZoneProps {
   onEvaluate: (title: string, channel: string, text: string) => void;
@@ -321,21 +322,15 @@ export const InteractiveUploadZone: React.FC<InteractiveUploadZoneProps> = ({
             </motion.div>
           )}
 
-          {/* Parsing Redaction Bars Animation */}
+          {/* Case-File Skeleton Shimmer during Document Ingestion */}
           {isParsing && (
-            <div style={{ width: '220px', display: 'flex', flexDirection: 'column', gap: '8px', zIndex: 5 }}>
-              <div style={{ fontSize: '0.72rem', fontFamily: 'var(--font-mono)', color: 'var(--color-highlighter)', textAlign: 'center' }}>
-                REDACTING & PARSING GUIDELINES...
-              </div>
-              {[1, 2, 3].map(i => (
-                <div key={i} style={{ height: '6px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '3px', overflow: 'hidden' }}>
-                  <motion.div
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.15, ease: 'easeInOut' }}
-                    style={{ height: '100%', width: '60%', backgroundColor: 'var(--color-stamp-red)' }}
-                  />
-                </div>
-              ))}
+            <div style={{ width: '90%', maxWidth: '380px', zIndex: 10 }}>
+              <CaseFileSkeletonShimmer
+                lines={2}
+                compact
+                title="REDACTING PII & INGESTING COPY"
+                subtitle="Preparing text for brand vault citation audit..."
+              />
             </div>
           )}
 
@@ -370,23 +365,25 @@ export const InteractiveUploadZone: React.FC<InteractiveUploadZoneProps> = ({
             position: 'relative'
           }}
         >
-          {/* Scanning Sweep Laser Line */}
+          {/* Scanning Sweep Laser Line (Pure GPU Transform & Opacity) */}
           <AnimatePresence>
             {isScanningSweep && (
               <motion.div
-                initial={{ top: '0%' }}
-                animate={{ top: '100%' }}
+                initial={{ y: 0, opacity: 0.9 }}
+                animate={{ y: 380, opacity: [0.9, 1, 0.4] }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.4, ease: 'easeInOut' }}
+                transition={{ duration: 0.45, ease: 'easeInOut' }}
                 style={{
                   position: 'absolute',
+                  top: 0,
                   left: 0,
                   right: 0,
                   height: '3px',
                   backgroundColor: 'var(--color-stamp-red)',
                   boxShadow: '0 0 15px 3px var(--color-stamp-red)',
                   zIndex: 20,
-                  pointerEvents: 'none'
+                  pointerEvents: 'none',
+                  willChange: 'transform'
                 }}
               />
             )}
@@ -503,6 +500,23 @@ export const InteractiveUploadZone: React.FC<InteractiveUploadZoneProps> = ({
             <div style={{ color: 'var(--color-stamp-red)', fontSize: '0.8rem', fontFamily: 'var(--font-mono)' }}>
               ⚠ {errorMessage}
             </div>
+          )}
+
+          {/* Case-File Skeleton Shimmer during Knowledge Vault Audit */}
+          {isEvaluating && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ overflow: 'hidden' }}
+            >
+              <CaseFileSkeletonShimmer
+                lines={3}
+                title="AUDITING CITATION GATE // BRAND COMPLIANCE"
+                subtitle={`Evaluating copy against ${clientName}'s brand knowledge vault...`}
+              />
+            </motion.div>
           )}
 
           <button

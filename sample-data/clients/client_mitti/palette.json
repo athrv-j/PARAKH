@@ -1,0 +1,24 @@
+{
+  "client_id": "client_mitti",
+  "brand_name": "Mitti & Moon Botanical",
+  "colors": {
+    "primary": "#2C1810",
+    "secondary": "#C06C54",
+    "accent": "#E29578",
+    "surface": "#FAF6F0",
+    "verified": "#2FBF71",
+    "muted": "#8A7968"
+  },
+  "wcag_contrast_guidelines": {
+    "minimum_ratio_body_text": "4.5:1",
+    "minimum_ratio_large_text": "3.0:1",
+    "prohibited_pairings": [
+      {
+        "fg": "#E29578",
+        "bg": "#FAF6F0",
+        "ratio": "2.1:1",
+        "reason": "Fails WCAG AA body text readability"
+      }
+    ]
+  }
+}

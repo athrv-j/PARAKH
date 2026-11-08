@@ -22,9 +22,9 @@ interface HeaderProps {
 }
 
 const NAV_TABS = [
-  { id: 'review' as NavTabId, label: 'Review Workspace', icon: '📋' },
-  { id: 'ripple' as NavTabId, label: 'Fact Ripple Board', icon: '🕸️' },
-  { id: 'debugger' as NavTabId, label: 'Guideline Debugger', icon: '🩺' },
+  { id: 'review' as NavTabId, label: 'Review', icon: '📋' },
+  { id: 'ripple' as NavTabId, label: 'Fact Ripple', icon: '🕸️' },
+  { id: 'debugger' as NavTabId, label: 'Debugger', icon: '🩺' },
   { id: 'about_ai' as NavTabId, label: 'About AI', icon: '🛡️' }
 ];
 
@@ -53,19 +53,17 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  // Sticky header scroll compression via useScroll
+  // Sticky header scroll compression
   const { scrollY } = useScroll();
-  const logoScale = useTransform(scrollY, [0, 80], [1, 0.88]);
-  const headerPadding = useTransform(scrollY, [0, 80], ['0.8rem 2rem', '0.45rem 1.5rem']);
-  const bgOpacity = useTransform(scrollY, [0, 80], [0.85, 0.96]);
-  const backdropBlur = useTransform(scrollY, [0, 80], [8, 20]);
+  const logoScale = useTransform(scrollY, [0, 80], [1, 0.9]);
 
   const currentClient = clients.find(c => c.id === selectedClientId) || clients[0];
 
   return (
     <>
       {/* DESKTOP & TABLET STICKY HEADER */}
-      <motion.header
+      <header
+        className="header-main"
         style={{
           position: 'sticky',
           top: 0,
@@ -76,38 +74,41 @@ export const Header: React.FC<HeaderProps> = ({
           alignItems: 'center',
           flexWrap: 'nowrap',
           gap: '1rem',
-          padding: headerPadding,
-          backgroundColor: useTransform(bgOpacity, v => `rgba(16, 17, 20, ${v})`),
-          backdropFilter: useTransform(backdropBlur, v => `blur(${v}px)`),
-          WebkitBackdropFilter: useTransform(backdropBlur, v => `blur(${v}px)`)
+          padding: '0.65rem 1.5rem',
+          backgroundColor: 'rgba(16, 17, 20, 0.95)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          boxSizing: 'border-box',
+          width: '100%'
         }}
       >
         {/* LEFT: LOGO & BRAND VAULT SELECTOR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          {/* Logo with hardware-accelerated shrink on scroll */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+          {/* Logo */}
           <motion.div
             style={{
               scale: logoScale,
               transformOrigin: 'left center',
               display: 'flex',
               alignItems: 'baseline',
-              gap: '0.4rem',
-              cursor: 'pointer'
+              gap: '0.35rem',
+              cursor: 'pointer',
+              flexShrink: 0
             }}
             onClick={() => onTabChange('review')}
           >
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.5rem', fontWeight: 800, color: 'var(--color-paper-light)', letterSpacing: '-0.5px' }}>
+            <span style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', fontWeight: 800, color: 'var(--color-paper-light)', letterSpacing: '-0.5px' }}>
               Parakh
             </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: '0.9rem', color: 'var(--color-steel)' }}>
+            <span className="header-logo-sub" style={{ fontFamily: 'var(--font-sans)', fontSize: '0.85rem', color: 'var(--color-steel)' }}>
               (परख)
             </span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--color-highlighter)', fontFamily: 'var(--font-mono)', letterSpacing: '1px' }}>
+            <span className="header-logo-sub" style={{ fontSize: '0.62rem', color: 'var(--color-highlighter)', fontFamily: 'var(--font-mono)', letterSpacing: '1px' }}>
               // GOV
             </span>
           </motion.div>
 
-          {/* ANIMATED BRAND VAULT DROPDOWN */}
+          {/* BRAND VAULT DROPDOWN */}
           <div ref={dropdownRef} style={{ position: 'relative' }}>
             <motion.button
               whileTap={{ scale: 0.96 }}
@@ -116,24 +117,22 @@ export const Header: React.FC<HeaderProps> = ({
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem',
+                gap: '0.35rem',
                 backgroundColor: 'var(--color-ink-card)',
                 border: '1px solid var(--color-docket-border)',
                 borderRadius: '6px',
-                padding: '5px 12px',
+                padding: '5px 10px',
                 color: 'var(--color-paper-light)',
                 cursor: 'pointer',
-                fontSize: '0.82rem',
-                fontWeight: 600
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                whiteSpace: 'nowrap'
               }}
             >
-              <span style={{ fontSize: '0.7rem', color: 'var(--color-steel)', textTransform: 'uppercase' }}>
-                Vault:
+              <span>🏢</span>
+              <span style={{ color: 'var(--color-paper-light)', fontWeight: 600 }}>
+                {currentClient.name}
               </span>
-              <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                🏢 {currentClient.name}
-              </span>
-              {/* Rotating Chevron */}
               <motion.span
                 animate={{ rotate: isVaultOpen ? 180 : 0 }}
                 transition={springs.snappy}
@@ -143,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
               </motion.span>
             </motion.button>
 
-            {/* Dropdown Popover with Staggered Options */}
+            {/* Dropdown Popover */}
             <AnimatePresence>
               {isVaultOpen && (
                 <motion.div
@@ -210,17 +209,19 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* CENTER: DESKTOP NAV TABS WITH GLIDING RED ACTIVE PILL */}
+        {/* CENTER: DESKTOP NAV TABS (PIXEL-PERFECT, NO WRAPPING, LEVEL HEIGHT) */}
         <nav
           className="desktop-nav"
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.35rem',
+            gap: '0.25rem',
             backgroundColor: 'var(--color-ink-card)',
-            padding: '4px',
+            padding: '3px 4px',
             borderRadius: '8px',
-            border: '1px solid var(--color-docket-border)'
+            border: '1px solid var(--color-docket-border)',
+            height: '38px',
+            boxSizing: 'border-box'
           }}
         >
           {NAV_TABS.map(tab => {
@@ -236,20 +237,24 @@ export const Header: React.FC<HeaderProps> = ({
                   position: 'relative',
                   border: 'none',
                   background: 'transparent',
-                  padding: '6px 14px',
+                  padding: '5px 12px',
+                  height: '32px',
                   borderRadius: '6px',
                   color: isActive ? '#FFFFFF' : 'var(--color-steel)',
                   fontWeight: isActive ? 700 : 500,
                   fontSize: '0.82rem',
                   cursor: 'pointer',
-                  display: 'flex',
+                  display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
                   zIndex: 1,
-                  userSelect: 'none'
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap',
+                  boxSizing: 'border-box',
+                  lineHeight: 1
                 }}
               >
-                {/* GLIDING RED ACTIVE PILL VIA layoutId */}
+                {/* GLIDING RED ACTIVE PILL VIA layoutId — FITS EXACTLY INSIDE NAV BAR */}
                 {isActive && (
                   <motion.div
                     layoutId="activeNavPill"
@@ -259,40 +264,27 @@ export const Header: React.FC<HeaderProps> = ({
                       inset: 0,
                       borderRadius: '6px',
                       backgroundColor: 'var(--color-stamp-red)',
-                      boxShadow: '0 0 14px rgba(215, 38, 61, 0.45)',
+                      boxShadow: '0 0 12px rgba(215, 38, 61, 0.45)',
                       zIndex: -1
                     }}
                   />
                 )}
 
-                {/* Small animated icon on hover */}
-                <motion.span
-                  variants={{
-                    initial: { rotate: 0, scale: 1 },
-                    hover: {
-                      rotate: [0, -10, 10, -5, 0],
-                      scale: 1.2,
-                      transition: { duration: 0.35, ease: 'easeInOut' }
-                    }
-                  }}
-                  style={{ display: 'inline-block' }}
-                >
-                  {tab.icon}
-                </motion.span>
-
+                <span style={{ fontSize: '0.85rem' }}>{tab.icon}</span>
                 <span>{tab.label}</span>
               </motion.button>
             );
           })}
         </nav>
 
-        {/* RIGHT: AUTH, INGEST & INFO BUTTON */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+        {/* RIGHT: AUTH, INGEST & INFO BUTTONS */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
           {/* Supabase Auth Button */}
           <motion.button
             whileTap={{ scale: 0.96 }}
             whileHover={{ scale: 1.03 }}
             onClick={onOpenAuth}
+            className="auth-btn"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -300,10 +292,11 @@ export const Header: React.FC<HeaderProps> = ({
               backgroundColor: 'transparent',
               border: `1px solid ${authUser ? 'var(--color-verified-green)' : 'var(--color-docket-border)'}`,
               borderRadius: '6px',
-              padding: '6px 12px',
+              padding: '6px 10px',
               color: authUser ? 'var(--color-verified-green)' : 'var(--color-paper-light)',
               fontSize: '0.78rem',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
             }}
           >
             <span>⚡</span>
@@ -315,8 +308,14 @@ export const Header: React.FC<HeaderProps> = ({
             whileTap={{ scale: 0.96 }}
             whileHover={{ scale: 1.03 }}
             onClick={onOpenUpload}
-            className="btn btn-primary"
-            style={{ padding: '6px 14px', fontSize: '0.8rem', fontWeight: 600, borderRadius: '6px' }}
+            className="btn btn-primary ingest-btn"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.78rem',
+              fontWeight: 600,
+              borderRadius: '6px',
+              whiteSpace: 'nowrap'
+            }}
           >
             + Ingest Guidelines
           </motion.button>
@@ -328,8 +327,8 @@ export const Header: React.FC<HeaderProps> = ({
             title="Project Quick Guide"
             onClick={onOpenQuickGuide}
             style={{
-              width: '32px',
-              height: '32px',
+              width: '30px',
+              height: '30px',
               borderRadius: '50%',
               backgroundColor: 'var(--color-ink-card)',
               border: '1px solid var(--color-highlighter)',
@@ -338,21 +337,22 @@ export const Header: React.FC<HeaderProps> = ({
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: '0.95rem',
+              fontSize: '0.9rem',
               fontWeight: 800,
-              boxShadow: '0 0 10px rgba(255, 214, 10, 0.2)'
+              boxShadow: '0 0 10px rgba(255, 214, 10, 0.2)',
+              flexShrink: 0
             }}
           >
             ⓘ
           </motion.button>
         </div>
-      </motion.header>
+      </header>
 
-      {/* MOBILE BOTTOM TAB BAR (Appears on screens <= 768px, perfect for 360px viewport) */}
+      {/* MOBILE BOTTOM TAB BAR (Appears on screens <= 768px) */}
       <nav
         className="mobile-bottom-nav"
         style={{
-          display: 'none', // Shown via CSS media query below
+          display: 'none',
           position: 'fixed',
           bottom: 0,
           left: 0,
@@ -390,7 +390,6 @@ export const Header: React.FC<HeaderProps> = ({
                 userSelect: 'none'
               }}
             >
-              {/* SLIDING RED ACTIVE PILL ON MOBILE */}
               {isActive && (
                 <motion.div
                   layoutId="activeNavPillMobile"
@@ -408,16 +407,16 @@ export const Header: React.FC<HeaderProps> = ({
 
               <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{tab.icon}</span>
               <span style={{ fontSize: '0.62rem', fontFamily: 'var(--font-mono)', fontWeight: isActive ? 700 : 500, letterSpacing: '0.5px' }}>
-                {tab.id === 'review' ? 'Review' : tab.id === 'ripple' ? 'Ripple' : tab.id === 'debugger' ? 'Debugger' : 'About'}
+                {tab.label}
               </span>
             </motion.button>
           );
         })}
       </nav>
 
-      {/* Media Query Styles for Desktop vs Mobile Nav */}
+      {/* Responsive Styles */}
       <style>{`
-        @media (max-width: 768px) {
+        @media (max-width: 860px) {
           .desktop-nav {
             display: none !important;
           }
@@ -426,6 +425,15 @@ export const Header: React.FC<HeaderProps> = ({
           }
           main {
             padding-bottom: 74px !important;
+          }
+        }
+        @media (max-width: 640px) {
+          .header-main {
+            padding: 0.5rem 0.65rem !important;
+            gap: 0.35rem !important;
+          }
+          .header-logo-sub {
+            display: none !important;
           }
         }
       `}</style>

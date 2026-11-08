@@ -1,5 +1,6 @@
 -- ============================================================================
--- PARAKH (परख) SUPABASE POSTGRESQL SCHEMA
+-- PARAKH (परख) SUPABASE POSTGRESQL SCHEMA WITH ROW-LEVEL SECURITY (RLS)
+-- Multi-Tenant Isolation & Role-Based Access Control (RBAC)
 -- Execute this script in your Supabase SQL Editor: Dashboard -> SQL Editor
 -- ============================================================================
 
@@ -15,10 +16,10 @@ CREATE TABLE IF NOT EXISTS public.clients (
 
 -- 2. Users Table
 CREATE TABLE IF NOT EXISTS public.users (
-    id TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY, -- matches auth.uid()
     name TEXT NOT NULL,
     role TEXT NOT NULL CHECK(role IN ('creator', 'manager', 'reviewer', 'client_viewer')),
-    client_access JSONB DEFAULT '[]'::jsonb,
+    client_access JSONB NOT NULL DEFAULT '[]'::jsonb, -- Array of client_ids user is permitted to view/edit
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS public.clauses (
     id TEXT NOT NULL,
     client_id TEXT NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
     version INTEGER NOT NULL DEFAULT 1,
-    category TEXT NOT NULL, -- 'tone', 'terminology', 'claims', 'visuals', 'accessibility'
+    category TEXT NOT NULL CHECK(category IN ('tone', 'terminology', 'claims', 'visuals', 'accessibility')),
     text TEXT NOT NULL,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -185,22 +186,205 @@ CREATE TABLE IF NOT EXISTS public.audit_log (
     timestamp TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Row Level Security (RLS) Enablement
+-- ============================================================================
+-- ROW LEVEL SECURITY (RLS) & ISOLATION FUNCTIONS
+-- ============================================================================
+
+-- Function: Returns client IDs user is authorized to access
+CREATE OR REPLACE FUNCTION public.get_user_client_access()
+RETURNS text[] AS $$
+BEGIN
+  RETURN ARRAY(
+    SELECT jsonb_array_elements_text(client_access)
+    FROM public.users
+    WHERE public.users.id = auth.uid()::text
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Function: Returns user's assigned role
+CREATE OR REPLACE FUNCTION public.get_user_role()
+RETURNS text AS $$
+BEGIN
+  RETURN (
+    SELECT role
+    FROM public.users
+    WHERE public.users.id = auth.uid()::text
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER STABLE;
+
+-- Enable RLS across all operational tables
 ALTER TABLE public.clients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.clauses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.terms ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.facts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.drafts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.draft_versions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.findings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.decisions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.precedents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.fact_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_log ENABLE ROW LEVEL SECURITY;
 
--- Allow authenticated and service role access
-CREATE POLICY "Public read/write access for Parakh API" ON public.clients FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Clauses" ON public.clauses FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Terms" ON public.terms FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Facts" ON public.facts FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Drafts" ON public.drafts FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Findings" ON public.findings FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Precedents" ON public.precedents FOR ALL USING (true);
-CREATE POLICY "Public read/write access for Parakh Audit" ON public.audit_log FOR ALL USING (true);
+-- 1. Users policies: users can view their own profile
+CREATE POLICY "users_self_select" ON public.users
+  FOR SELECT TO authenticated
+  USING (id = auth.uid()::text);
+
+-- 2. Clients policies: only authorized clients visible
+CREATE POLICY "clients_vault_select" ON public.clients
+  FOR SELECT TO authenticated
+  USING (id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "clients_manager_insert" ON public.clients
+  FOR INSERT TO authenticated
+  WITH CHECK (public.get_user_role() = 'manager');
+
+-- 3. Clauses policies: read within client access, managers can write
+CREATE POLICY "clauses_vault_select" ON public.clauses
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "clauses_manager_modify" ON public.clauses
+  FOR ALL TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager')
+  WITH CHECK (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager');
+
+-- 4. Terms, Facts, Assets: read within client access, managers can modify
+CREATE POLICY "terms_vault_select" ON public.terms
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "terms_manager_modify" ON public.terms
+  FOR ALL TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager')
+  WITH CHECK (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager');
+
+CREATE POLICY "facts_vault_select" ON public.facts
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "facts_manager_modify" ON public.facts
+  FOR ALL TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager')
+  WITH CHECK (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager');
+
+CREATE POLICY "assets_vault_select" ON public.assets
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "assets_manager_modify" ON public.assets
+  FOR ALL TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager')
+  WITH CHECK (client_id = ANY(public.get_user_client_access()) AND public.get_user_role() = 'manager');
+
+-- 5. Drafts: isolation by vault, creators can create/edit draft, reviewers/managers can transition
+CREATE POLICY "drafts_vault_select" ON public.drafts
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "drafts_creator_insert" ON public.drafts
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    client_id = ANY(public.get_user_client_access())
+    AND public.get_user_role() IN ('creator', 'manager', 'reviewer')
+  );
+
+CREATE POLICY "drafts_status_update" ON public.drafts
+  FOR UPDATE TO authenticated
+  USING (
+    client_id = ANY(public.get_user_client_access())
+    AND (
+      public.get_user_role() IN ('manager', 'reviewer')
+      OR (public.get_user_role() = 'creator' AND status = 'draft')
+    )
+  );
+
+-- 6. Draft versions
+CREATE POLICY "draft_versions_vault_select" ON public.draft_versions
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "draft_versions_insert" ON public.draft_versions
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    client_id = ANY(public.get_user_client_access())
+    AND public.get_user_role() IN ('creator', 'manager', 'reviewer')
+  );
+
+-- 7. Findings: read within client access, reviewers/managers can resolve
+CREATE POLICY "findings_vault_select" ON public.findings
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "findings_insert" ON public.findings
+  FOR INSERT TO authenticated
+  WITH CHECK (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "findings_resolve_update" ON public.findings
+  FOR UPDATE TO authenticated
+  USING (
+    client_id = ANY(public.get_user_client_access())
+    AND public.get_user_role() IN ('manager', 'reviewer')
+  );
+
+-- 8. Decisions & Precedents
+CREATE POLICY "precedents_vault_select" ON public.precedents
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "precedents_reviewer_insert" ON public.precedents
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    client_id = ANY(public.get_user_client_access())
+    AND public.get_user_role() IN ('manager', 'reviewer')
+  );
+
+CREATE POLICY "decisions_vault_select" ON public.decisions
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "decisions_reviewer_insert" ON public.decisions
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    client_id = ANY(public.get_user_client_access())
+    AND public.get_user_role() IN ('manager', 'reviewer')
+  );
+
+-- 9. Fact links & Comments
+CREATE POLICY "fact_links_vault_select" ON public.fact_links
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "comments_vault_select" ON public.comments
+  FOR SELECT TO authenticated
+  USING (client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "comments_insert" ON public.comments
+  FOR INSERT TO authenticated
+  WITH CHECK (client_id = ANY(public.get_user_client_access()));
+
+-- 10. Audit log: read scoped to user client access, insert open to system
+CREATE POLICY "audit_vault_select" ON public.audit_log
+  FOR SELECT TO authenticated
+  USING (client_id IS NULL OR client_id = ANY(public.get_user_client_access()));
+
+CREATE POLICY "audit_system_insert" ON public.audit_log
+  FOR INSERT TO authenticated
+  WITH CHECK (true);
+
+-- 11. Backend Service Role Bypass (For background worker / migration maintenance)
+CREATE POLICY "service_role_clients" ON public.clients FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_clauses" ON public.clauses FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_terms" ON public.terms FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_facts" ON public.facts FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_assets" ON public.assets FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_drafts" ON public.drafts FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_draft_versions" ON public.draft_versions FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_findings" ON public.findings FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_precedents" ON public.precedents FOR ALL TO service_role USING (true) WITH CHECK (true);
+CREATE POLICY "service_role_audit" ON public.audit_log FOR ALL TO service_role USING (true) WITH CHECK (true);

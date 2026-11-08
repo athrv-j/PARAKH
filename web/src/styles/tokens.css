@@ -44,6 +44,13 @@ html, body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  width: 100%;
+}
+
+/* Custom Cursor Rules (Active on Mouse/Trackpad Movement) */
+html.custom-cursor-active,
+html.custom-cursor-active * {
+  cursor: none !important;
 }
 
 /* Custom Scrollbars */
@@ -164,9 +171,14 @@ html, body {
   position: relative;
 }
 
-.highlight-span:hover, .highlight-span.active {
-  background-color: rgba(255, 214, 10, 0.7);
-  box-shadow: 0 0 10px rgba(255, 214, 10, 0.5);
+@media (hover: hover) {
+  .highlight-span:hover, .highlight-span.active {
+    background-color: rgba(255, 214, 10, 0.7);
+    box-shadow: 0 0 10px rgba(255, 214, 10, 0.5);
+  }
+}
+.highlight-span:active {
+  background-color: rgba(255, 214, 10, 0.9);
 }
 
 /* Docket Label */
@@ -187,10 +199,15 @@ html, body {
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.index-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lift);
-  border-color: var(--color-steel);
+@media (hover: hover) {
+  .index-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--color-steel);
+  }
+}
+.index-card:active {
+  transform: scale(0.98);
 }
 
 /* Word Diff Tokens */
@@ -219,7 +236,7 @@ html, body {
   100% { transform: translateY(100%); }
 }
 
-/* Buttons and Interactive Elements */
+/* Buttons and Interactive Elements with Tap States */
 .btn {
   font-family: var(--font-mono);
   font-size: 0.85rem;
@@ -230,21 +247,28 @@ html, body {
   border-radius: var(--radius-sm);
   cursor: pointer;
   border: 1px solid transparent;
-  transition: all 0.2s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   min-height: 44px;
+  touch-action: manipulation;
+}
+
+.btn:active {
+  transform: scale(0.96);
 }
 
 .btn-primary {
   background-color: var(--color-stamp-red);
   color: #FFFFFF;
 }
-.btn-primary:hover {
-  background-color: #B91D31;
-  box-shadow: 0 4px 12px rgba(215, 38, 61, 0.35);
+@media (hover: hover) {
+  .btn-primary:hover {
+    background-color: #B91D31;
+    box-shadow: 0 4px 12px rgba(215, 38, 61, 0.35);
+  }
 }
 
 .btn-outline {
@@ -252,17 +276,21 @@ html, body {
   border-color: var(--color-docket-border);
   color: var(--color-paper-light);
 }
-.btn-outline:hover {
-  border-color: var(--color-steel-light);
-  background-color: rgba(255, 255, 255, 0.05);
+@media (hover: hover) {
+  .btn-outline:hover {
+    border-color: var(--color-steel-light);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .btn-success {
   background-color: var(--color-verified-green);
   color: #101114;
 }
-.btn-success:hover {
-  background-color: #269C5C;
+@media (hover: hover) {
+  .btn-success:hover {
+    background-color: #269C5C;
+  }
 }
 
 /* Paper Grain Slow Drift Keyframes */
@@ -270,5 +298,25 @@ html, body {
   0% { transform: translate(0px, 0px) scale(1); }
   50% { transform: translate(-25px, 18px) scale(1.04); }
   100% { transform: translate(15px, -20px) scale(1); }
+}
+
+/* Universal Prefers Reduced Motion Simplification */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-stamp-slam,
+  .screen-shake,
+  .marching-ants,
+  .gov-orbit-outer,
+  .gov-orbit-middle,
+  .gov-radar-sweep {
+    animation: none !important;
+  }
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSupabase, configureSupabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { getSupabase, isSupabaseConfigured } from '../lib/supabaseClient';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,15 +15,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
-  // Supabase connection settings
-  const [showConfig, setShowConfig] = useState(!isSupabaseConfigured());
-  const [supabaseUrl, setSupabaseUrl] = useState(
-    typeof window !== 'undefined' ? localStorage.getItem('parakh_supabase_url') || '' : ''
-  );
-  const [supabaseAnonKey, setSupabaseAnonKey] = useState(
-    typeof window !== 'undefined' ? localStorage.getItem('parakh_supabase_key') || '' : ''
-  );
+  const isConfigured = isSupabaseConfigured();
 
   useEffect(() => {
     const client = getSupabase();
@@ -44,22 +36,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
 
   if (!isOpen) return null;
 
-  const handleSaveConfig = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!supabaseUrl.trim() || !supabaseAnonKey.trim()) {
-      setErrorMessage('Please provide both Supabase Project URL and Anon API Key.');
-      return;
-    }
-    const client = configureSupabase(supabaseUrl.trim(), supabaseAnonKey.trim());
-    if (client) {
-      setSuccessMessage('✓ Supabase connection successfully configured!');
-      setShowConfig(false);
-      setErrorMessage('');
-    } else {
-      setErrorMessage('Failed to connect to Supabase with provided credentials.');
-    }
-  };
-
   const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -67,8 +43,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
     const client = getSupabase();
 
     if (!client) {
-      setErrorMessage('Supabase is not configured yet. Please enter your project keys below.');
-      setShowConfig(true);
+      setErrorMessage('Supabase is not configured. Configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment.');
       return;
     }
 
@@ -228,14 +203,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
               <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  className="btn btn-outline"
-                  onClick={() => setShowConfig(!showConfig)}
-                  style={{ fontSize: '0.8rem', padding: '0.5rem 1rem' }}
-                >
-                  ⚙️ {showConfig ? 'Hide Supabase Keys' : 'Connection Keys'}
-                </button>
-                <button
-                  type="button"
                   className="btn"
                   onClick={handleSignOut}
                   style={{ backgroundColor: 'var(--color-stamp-red)', color: '#fff', fontSize: '0.8rem', padding: '0.5rem 1rem' }}
@@ -292,7 +259,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
                 />
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <button
                   type="button"
                   onClick={() => setIsSignUp(!isSignUp)}
@@ -307,20 +274,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
                 >
                   {isSignUp ? 'Already have an account? Sign in' : "Need an account? Register"}
                 </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowConfig(!showConfig)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: 'var(--color-steel)',
-                    cursor: 'pointer',
-                    fontSize: '0.82rem'
-                  }}
-                >
-                  ⚙️ {showConfig ? 'Hide Setup' : 'Supabase Setup'}
-                </button>
               </div>
 
               <button
@@ -334,77 +287,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
             </form>
           )}
 
-          {/* Collapsible Supabase Keys Configuration Form */}
-          {showConfig && (
+          {!isConfigured && (
             <div
               style={{
                 marginTop: '1.5rem',
-                paddingTop: '1.25rem',
-                borderTop: '1px dashed var(--color-docket-border)'
+                padding: '0.85rem 1rem',
+                border: '1px solid var(--color-docket-border)',
+                borderRadius: '4px',
+                backgroundColor: 'rgba(255, 255, 255, 0.03)'
               }}
             >
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-steel)', marginBottom: '0.5rem', letterSpacing: '1px' }}>
-                SUPABASE INSTANCE SETTINGS
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-highlighter)', marginBottom: '0.25rem', letterSpacing: '1px' }}>
+                🔒 ZERO-SECRETS PRODUCTION ENVIRONMENT
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--color-steel)', marginBottom: '1rem', lineHeight: '1.4' }}>
-                Connect your hosted Supabase PostgreSQL project. Enter your project URL and public Anon key below:
+              <p style={{ fontSize: '0.78rem', color: 'var(--color-steel)', margin: 0, lineHeight: '1.4' }}>
+                Supabase credentials must be configured via environment variables (<code style={{ color: 'var(--color-paper-light)' }}>VITE_SUPABASE_URL</code> and <code style={{ color: 'var(--color-paper-light)' }}>VITE_SUPABASE_ANON_KEY</code>). Client storage of API keys is disabled for security.
               </p>
-
-              <form onSubmit={handleSaveConfig}>
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-steel)', marginBottom: '0.3rem' }}>
-                    Supabase Project URL
-                  </label>
-                  <input
-                    type="url"
-                    value={supabaseUrl}
-                    onChange={e => setSupabaseUrl(e.target.value)}
-                    placeholder="https://xyzproject.supabase.co"
-                    style={{
-                      width: '100%',
-                      backgroundColor: 'var(--color-ink)',
-                      border: '1px solid var(--color-docket-border)',
-                      borderRadius: '4px',
-                      padding: '0.5rem 0.75rem',
-                      color: 'var(--color-paper-light)',
-                      fontSize: '0.82rem',
-                      fontFamily: 'var(--font-mono)',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--color-steel)', marginBottom: '0.3rem' }}>
-                    Supabase Anon API Key
-                  </label>
-                  <input
-                    type="password"
-                    value={supabaseAnonKey}
-                    onChange={e => setSupabaseAnonKey(e.target.value)}
-                    placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."
-                    style={{
-                      width: '100%',
-                      backgroundColor: 'var(--color-ink)',
-                      border: '1px solid var(--color-docket-border)',
-                      borderRadius: '4px',
-                      padding: '0.5rem 0.75rem',
-                      color: 'var(--color-paper-light)',
-                      fontSize: '0.82rem',
-                      fontFamily: 'var(--font-mono)',
-                      outline: 'none'
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-outline"
-                  style={{ width: '100%', padding: '0.5rem', fontSize: '0.82rem' }}
-                >
-                  Save Supabase Settings
-                </button>
-              </form>
             </div>
           )}
         </div>

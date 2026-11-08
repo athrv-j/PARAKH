@@ -1,0 +1,167 @@
+[
+  {
+    "id": "PREC-VYA-001A",
+    "client_id": "client_vyapar",
+    "clause_id": "C-3.2",
+    "finding_id": "find_prev_01",
+    "decision": "accepted",
+    "reason": "Allowed showing daily equivalent interest rate (0.03% daily) instead of annual APR in Instagram reel thumbnail for simplicity.",
+    "scope": "channel:instagram",
+    "expiry": "2026-12-31",
+    "decided_by": "Rohit Verma, Brand Lead"
+  },
+  {
+    "id": "PREC-VYA-001B",
+    "client_id": "client_vyapar",
+    "clause_id": "C-3.2",
+    "finding_id": "find_prev_02",
+    "decision": "dismissed",
+    "reason": "Rejected daily interest rate in Facebook ad because compliance officer insisted statutory annual APR (11.5%) must always be prominently displayed.",
+    "scope": "all_content",
+    "expiry": "2027-01-01",
+    "decided_by": "Sneha Kapur, Head of Legal & Regulatory"
+  },
+  {
+    "id": "PREC-MIT-002A",
+    "client_id": "client_mitti",
+    "clause_id": "C-2.1",
+    "finding_id": "find_prev_03",
+    "decision": "exception",
+    "reason": "Allowed phrase 100% natural and chemical-free in customer quote testimonial graphic as it was a direct user quote.",
+    "scope": "channel:testimonials",
+    "expiry": "2026-12-31",
+    "decided_by": "Priya Nambiar, Social Media Director"
+  },
+  {
+    "id": "PREC-MIT-002B",
+    "client_id": "client_mitti",
+    "clause_id": "C-2.1",
+    "finding_id": "find_prev_04",
+    "decision": "dismissed",
+    "reason": "Strictly denied chemical-free claim in founder story email, citing scientific accuracy guidelines.",
+    "scope": "channel:email",
+    "expiry": "2027-06-30",
+    "decided_by": "Aarav Mehta, Brand Governance Manager"
+  },
+  {
+    "id": "PREC-KAV-003A",
+    "client_id": "client_kavach",
+    "clause_id": "C-3.3",
+    "finding_id": "find_prev_05",
+    "decision": "exception",
+    "reason": "Allowed voted Best Diagnostic Lab in North India because accompanied by Times Healthcare Award citation logo.",
+    "scope": "channel:print_and_pr",
+    "expiry": "2026-11-30",
+    "decided_by": "Vikram Seth, Head of Corporate Communications"
+  },
+  {
+    "id": "PREC-KAV-003B",
+    "client_id": "client_kavach",
+    "clause_id": "C-3.3",
+    "finding_id": "find_prev_06",
+    "decision": "dismissed",
+    "reason": "Overruled agency claim calling Kavach India’s Best Diagnostic Solution in paid Google Search ad without full survey methodology link.",
+    "scope": "channel:performance_ads",
+    "expiry": "2026-12-31",
+    "decided_by": "Dr. Anita Roy, Chief Medical Officer"
+  },
+  {
+    "id": "PREC-KAV-EXP-01",
+    "client_id": "client_kavach",
+    "clause_id": "C-1.3",
+    "finding_id": "find_prev_07",
+    "decision": "exception",
+    "reason": "Temporary festival flash campaign exception approved for Diwali 2024 promotional push only.",
+    "scope": "campaign:diwali_2024",
+    "expiry": "2024-11-15",
+    "decided_by": "Manish Joshi, Former Brand Manager"
+  },
+  {
+    "id": "PREC-KAV-ACT-01",
+    "client_id": "client_kavach",
+    "clause_id": "C-1.2",
+    "finding_id": "find_prev_08",
+    "decision": "exception",
+    "reason": "Urgent seasonal awareness campaign requires single emphatic headline to alert patients about monsoon viral infections.",
+    "scope": "campaign:monsoon_shield",
+    "expiry": "2026-11-30",
+    "decided_by": "Dr. Anita Roy, Chief Medical Officer"
+  },
+  {
+    "id": "PREC-KAV-ACT-02",
+    "client_id": "client_kavach",
+    "clause_id": "C-2.3",
+    "finding_id": "find_prev_09",
+    "decision": "accepted",
+    "reason": "Substituted 'pocket-friendly checkup' in place of prohibited word 'cheap screening' in YouTube shorts voiceover.",
+    "scope": "channel:youtube",
+    "expiry": "2027-01-01",
+    "decided_by": "Pooja Hegde, Copy Lead"
+  },
+  {
+    "id": "PREC-VYA-ACT-01",
+    "client_id": "client_vyapar",
+    "clause_id": "C-1.4",
+    "finding_id": "find_prev_10",
+    "decision": "exception",
+    "reason": "Allowed phrase 'emergency bridge funding' in specialized invoice factoring email to textile manufacturers.",
+    "scope": "channel:email_b2b",
+    "expiry": "2026-12-31",
+    "decided_by": "Karan Johar, Product Marketing Director"
+  },
+  {
+    "id": "PREC-VYA-ACT-02",
+    "client_id": "client_vyapar",
+    "clause_id": "C-4.4",
+    "finding_id": "find_prev_11",
+    "decision": "accepted",
+    "reason": "Moved RBI lending partner disclaimer to side banner margin for horizontal LinkedIn display carousels.",
+    "scope": "channel:linkedin",
+    "expiry": "2026-12-31",
+    "decided_by": "Shalini Shah, Creative Director"
+  },
+  {
+    "id": "PREC-VYA-ACT-03",
+    "client_id": "client_vyapar",
+    "clause_id": "C-5.3",
+    "finding_id": "find_prev_12",
+    "decision": "dismissed",
+    "reason": "Rejected 20-word all-caps headline on SMS notification; insisted on sentence case for accessible readability.",
+    "scope": "channel:sms",
+    "expiry": "2027-01-01",
+    "decided_by": "Aarav Mehta, Brand Governance Manager"
+  },
+  {
+    "id": "PREC-MIT-ACT-01",
+    "client_id": "client_mitti",
+    "clause_id": "C-1.1",
+    "finding_id": "find_prev_13",
+    "decision": "accepted",
+    "reason": "Restructured product description to highlight Ayurvedic heritage and cold-pressed botanical carrier oils.",
+    "scope": "all_content",
+    "expiry": "2027-12-31",
+    "decided_by": "Nisha Rao, Head of Brand Storytelling"
+  },
+  {
+    "id": "PREC-MIT-ACT-02",
+    "client_id": "client_mitti",
+    "clause_id": "C-3.4",
+    "finding_id": "find_prev_14",
+    "decision": "exception",
+    "reason": "Allowed cooperative grower spotlight video using unvarnished field interviews without formal studio disclaimers.",
+    "scope": "channel:instagram_reels",
+    "expiry": "2026-12-31",
+    "decided_by": "Kabir Das, Video Producer"
+  },
+  {
+    "id": "PREC-MIT-ACT-03",
+    "client_id": "client_mitti",
+    "clause_id": "C-5.1",
+    "finding_id": "find_prev_15",
+    "decision": "dismissed",
+    "reason": "Rejected beige text on cream product box packaging mockup due to low contrast ratio failing WCAG AA.",
+    "scope": "packaging:all",
+    "expiry": "2028-01-01",
+    "decided_by": "Deepak Chopra, Compliance Auditor"
+  }
+]

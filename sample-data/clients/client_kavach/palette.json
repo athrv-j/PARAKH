@@ -1,0 +1,24 @@
+{
+  "client_id": "client_kavach",
+  "brand_name": "Kavach Health",
+  "colors": {
+    "primary": "#181A20",
+    "secondary": "#D7263D",
+    "accent": "#FFD60A",
+    "surface": "#F4EFE6",
+    "verified": "#2FBF71",
+    "muted": "#8A8F98"
+  },
+  "wcag_contrast_guidelines": {
+    "minimum_ratio_body_text": "4.5:1",
+    "minimum_ratio_large_text": "3.0:1",
+    "prohibited_pairings": [
+      {
+        "fg": "#FFD60A",
+        "bg": "#FFFFFF",
+        "ratio": "1.17:1",
+        "reason": "Fails WCAG AA severely; unreadable"
+      }
+    ]
+  }
+}

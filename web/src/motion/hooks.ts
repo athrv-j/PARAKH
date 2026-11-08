@@ -5,7 +5,13 @@ import { springs } from './presets';
 // ============================================================================
 // PARAKH MOTION HOOKS
 // Interactive micro-interactions using MotionValues and Springs
+// Disabled on touch devices to ensure clean tap interaction and 60fps performance
 // ============================================================================
+
+const isTouchDevice = () => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(hover: none)').matches || window.matchMedia('(pointer: coarse)').matches;
+};
 
 interface MagneticOptions {
   strength?: number;
@@ -13,7 +19,7 @@ interface MagneticOptions {
 
 /**
  * useMagnetic: Pulls an element subtly toward the mouse cursor when hovering
- * Returns motion values { x, y } to pass into style={{ x, y }} on a motion component.
+ * Disabled on touch devices to replace hover with tap states.
  */
 export function useMagnetic(
   ref: React.RefObject<HTMLElement | null>,
@@ -26,6 +32,8 @@ export function useMagnetic(
   const y = useSpring(rawY, springs.snappy);
 
   useEffect(() => {
+    if (isTouchDevice()) return;
+
     const el = ref.current;
     if (!el) return;
 
@@ -45,7 +53,7 @@ export function useMagnetic(
       rawY.set(0);
     };
 
-    el.addEventListener('mousemove', handleMouseMove);
+    el.addEventListener('mousemove', handleMouseMove, { passive: true });
     el.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
@@ -65,6 +73,7 @@ interface TiltOptions {
 /**
  * useTilt: Creates an editorial 3D card tilt effect on mouse move
  * Animates ONLY transform properties: rotateX, rotateY, and scale
+ * Disabled on touch devices to prevent sticky tilts and scroll friction.
  */
 export function useTilt(
   ref: React.RefObject<HTMLElement | null>,
@@ -88,6 +97,8 @@ export function useTilt(
   );
 
   useEffect(() => {
+    if (isTouchDevice()) return;
+
     const el = ref.current;
     if (!el) return;
 
@@ -107,7 +118,7 @@ export function useTilt(
       isHovered.set(0);
     };
 
-    el.addEventListener('mousemove', handleMouseMove);
+    el.addEventListener('mousemove', handleMouseMove, { passive: true });
     el.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
@@ -127,10 +138,12 @@ export function useTilt(
 /**
  * useSpotlight: Exposes mouse coordinates relative to an element
  * Updates CSS custom properties --spotlight-x, --spotlight-y, and --spotlight-opacity
- * for hardware-accelerated radial spotlight gradients.
+ * Disabled on touch devices.
  */
 export function useSpotlight(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
+    if (isTouchDevice()) return;
+
     const el = ref.current;
     if (!el) return;
 
@@ -148,7 +161,7 @@ export function useSpotlight(ref: React.RefObject<HTMLElement | null>) {
       el.style.setProperty('--spotlight-opacity', '0');
     };
 
-    el.addEventListener('mousemove', handleMouseMove);
+    el.addEventListener('mousemove', handleMouseMove, { passive: true });
     el.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {

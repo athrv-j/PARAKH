@@ -1,0 +1,24 @@
+{
+  "client_id": "client_vyapar",
+  "brand_name": "VyaparSetu Fintech",
+  "colors": {
+    "primary": "#0B192C",
+    "secondary": "#FF9F1C",
+    "accent": "#2EC4B6",
+    "surface": "#F7F9FC",
+    "verified": "#2FBF71",
+    "muted": "#6B7280"
+  },
+  "wcag_contrast_guidelines": {
+    "minimum_ratio_body_text": "4.5:1",
+    "minimum_ratio_large_text": "3.0:1",
+    "prohibited_pairings": [
+      {
+        "fg": "#FF9F1C",
+        "bg": "#FFFFFF",
+        "ratio": "1.9:1",
+        "reason": "Fails WCAG AA on pure white background"
+      }
+    ]
+  }
+}

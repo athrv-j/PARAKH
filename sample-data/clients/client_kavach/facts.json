@@ -1,0 +1,107 @@
+[
+  {
+    "id": "F-KAV-01",
+    "label": "Basic Health Checkup Price",
+    "value": "₹499",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-02",
+    "label": "Diwali Wellness Camp Price",
+    "value": "₹899",
+    "valid_from": "2026-10-15",
+    "valid_until": "2026-11-05"
+  },
+  {
+    "id": "F-KAV-03",
+    "label": "NABL Accreditation Code",
+    "value": "NABL-MC-2026-441",
+    "valid_from": "2025-01-01",
+    "valid_until": "2028-01-01"
+  },
+  {
+    "id": "F-KAV-04",
+    "label": "Teleconsultation Hours",
+    "value": "24 hours, 7 days a week",
+    "valid_from": "2026-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-KAV-05",
+    "label": "Partner Hospital Network",
+    "value": "350+ certified clinics across India",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-06",
+    "label": "Average Report Delivery Time",
+    "value": "6 to 12 hours from sample collection",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-07",
+    "label": "Qualified Specialist Count",
+    "value": "Over 1,200 verified doctors",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-08",
+    "label": "Senior Citizen Discount",
+    "value": "Flat 15% discount on all comprehensive panels",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-09",
+    "label": "Home Sample Collection Charge",
+    "value": "Free on orders above ₹799",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-10",
+    "label": "Cardiac Screening Panel Price",
+    "value": "₹1,299",
+    "valid_from": "2026-03-01",
+    "valid_until": "2026-11-20"
+  },
+  {
+    "id": "F-KAV-11",
+    "label": "ISO Standard Certification",
+    "value": "ISO 15189:2022 Medical Laboratories",
+    "valid_from": "2024-01-01",
+    "valid_until": "2027-01-01"
+  },
+  {
+    "id": "F-KAV-12",
+    "label": "Diabetes Fasting Package Price",
+    "value": "₹299",
+    "valid_from": "2026-01-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-13",
+    "label": "Customer Helpline Number",
+    "value": "1800-419-KAVACH",
+    "valid_from": "2025-01-01",
+    "valid_until": "2030-01-01"
+  },
+  {
+    "id": "F-KAV-14",
+    "label": "Mobile App Download Milestone",
+    "value": "2 Million+ registered users",
+    "valid_from": "2026-06-01",
+    "valid_until": "2026-12-31"
+  },
+  {
+    "id": "F-KAV-15",
+    "label": "Special Winter Shield Package",
+    "value": "₹999",
+    "valid_from": "2026-11-01",
+    "valid_until": "2027-02-28"
+  }
+]

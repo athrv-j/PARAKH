@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 import { ReviewWorkspace, FindingUI } from './scenes/ReviewWorkspace.tsx';
 import { FactRippleBoard } from './scenes/FactRippleBoard.tsx';
 import { GuidelineDebuggerView } from './scenes/GuidelineDebuggerView.tsx';
@@ -12,6 +12,8 @@ import { Header, NavTabId } from './components/Header.tsx';
 import { VaultDoorTransition } from './components/VaultDoorTransition.tsx';
 import { HowParakhWorks } from './components/HowParakhWorks.tsx';
 import { InteractiveUploadZone } from './components/InteractiveUploadZone.tsx';
+import { CustomCursor } from './components/CustomCursor.tsx';
+import { ToastContainer } from './components/ToastContainer.tsx';
 import { getSupabase } from './lib/supabaseClient.ts';
 
 
@@ -26,6 +28,9 @@ interface DraftItem {
   title: string;
   channel: string;
   text: string;
+  ai_status?: 'available' | 'unavailable' | 'cached';
+  ai_notice?: string | null;
+  from_cache?: boolean;
   findings: FindingUI[];
 }
 
@@ -39,6 +44,7 @@ export default function App() {
   const [currentDraft, setCurrentDraft] = useState<DraftItem | null>(null);
 
   const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evalErrorNotice, setEvalErrorNotice] = useState<string | null>(null);
 
   // Tab & Auth State
   const [activeTab, setActiveTab] = useState<NavTabId>('review');
@@ -55,6 +61,20 @@ export default function App() {
   // Gov Core Scan Result & Hero Ref
   const [scanResult, setScanResult] = useState<'green' | 'amber' | 'red' | null>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  // Pause animations when tab is hidden
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden) {
+        document.documentElement.classList.add('tab-hidden');
+      } else {
+        document.documentElement.classList.remove('tab-hidden');
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
 
 
   // Listen for Supabase Auth state
@@ -89,6 +109,7 @@ export default function App() {
   const handleEvaluateFromZone = async (title: string, channel: string, text: string) => {
     setIsEvaluating(true);
     setScanResult(null);
+    setEvalErrorNotice(null);
     try {
       const response = await fetch(`/api/review/clients/${selectedClientId}/drafts`, {
         method: 'POST',
@@ -102,7 +123,8 @@ export default function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`Evaluation failed with status ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Evaluation request returned status ${response.status}`);
       }
 
       const data = await response.json();
@@ -121,6 +143,9 @@ export default function App() {
             title: data.draft.title,
             channel: data.draft.channel,
             text: data.draft.text,
+            ai_status: data.draft.ai_status || data.ai_status,
+            ai_notice: data.draft.ai_notice || data.ai_notice,
+            from_cache: data.draft.from_cache || data.from_cache,
             findings: data.draft.findings || []
           });
           setActiveTab('review');
@@ -130,7 +155,7 @@ export default function App() {
         setIsEvaluating(false);
       }
     } catch (err: any) {
-      alert(`Error evaluating copy: ${err.message}`);
+      setEvalErrorNotice(err.message || 'Failed to complete review. Please check connection and try again.');
       setIsEvaluating(false);
     }
   };
@@ -194,173 +219,178 @@ export default function App() {
       />
 
 
-      {/* MAIN VIEWPORT */}
-      <main style={{ flex: 1, padding: '1.5rem 0', display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'review' && (
-          <>
-            {!currentDraft ? (
+      {/* MAIN VIEWPORT WITH PURPOSEFUL TAB PAGE TRANSITIONS */}
+      <main style={{ flex: 1, padding: '1rem 0', display: 'flex', flexDirection: 'column' }}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 12, filter: 'blur(3px)' }}
+            animate={prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, filter: 'blur(3px)' }}
+            transition={{ duration: prefersReducedMotion ? 0.15 : 0.28, ease: [0.19, 1, 0.22, 1] }}
+            style={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          >
+            {activeTab === 'review' && (
               <>
-                <div
-                ref={heroRef}
-                onMouseMove={e => {
-                  if (!heroRef.current) return;
-                  const rect = heroRef.current.getBoundingClientRect();
-                  const x = e.clientX - rect.left;
-                  const y = e.clientY - rect.top;
-                  heroRef.current.style.setProperty('--spotlight-x', `${x}px`);
-                  heroRef.current.style.setProperty('--spotlight-y', `${y}px`);
-                }}
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  maxWidth: '780px',
-                  margin: '1.5rem auto',
-                  padding: '2.5rem 1.5rem',
-                  borderRadius: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  overflow: 'hidden',
-                  background: 'radial-gradient(650px circle at var(--spotlight-x, 50%) var(--spotlight-y, 35%), rgba(215, 38, 61, 0.08), rgba(255, 214, 10, 0.03) 40%, transparent 70%)',
-                  border: '1px solid var(--color-docket-border)',
-                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5)'
-                }}
-              >
-                {/* Lightweight Tactile Grid Texture */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    pointerEvents: 'none',
-                    opacity: 0.35,
-                    zIndex: 0,
-                    backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px)',
-                    backgroundSize: '20px 20px'
-                  }}
-                />
-
-                {/* Center Moving Interactive Gov Core Orbit Graphic */}
-                <div style={{ marginBottom: '1.75rem', position: 'relative', zIndex: 1 }}>
-                  <GovernanceGyroscope
-                    status={isEvaluating ? 'scanning' : 'active'}
-                    isScanning={isEvaluating}
-                    scanResult={scanResult}
-                    size="min(220px, 75vw)"
-                  />
-                </div>
-
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.75rem',
-                    color: 'var(--color-highlighter)',
-                    letterSpacing: '2px',
-                    textTransform: 'uppercase',
-                    marginBottom: '0.35rem'
-                  }}
-                >
-                  ACTIVE VAULT: {currentClient.name.toUpperCase()}
-                </div>
-
-                {/* Word-by-Word Blur-to-Sharp Staggered Animated Headline */}
-                <h1
-                  style={{
-                    fontFamily: 'var(--font-serif)',
-                    fontSize: 'clamp(1.75rem, 4vw, 2.35rem)',
-                    color: 'var(--color-paper-light)',
-                    textAlign: 'center',
-                    margin: '0 0 0.75rem 0',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center',
-                    gap: '0.35rem 0.5rem',
-                    lineHeight: 1.25,
-                    fontWeight: 800
-                  }}
-                >
-                  {"Upload or Paste Copy for Brand Governance Review".split(' ').map((word, i) => (
-                    <motion.span
-                      key={i}
-                      initial={{ filter: 'blur(8px)', opacity: 0, y: 10 }}
-                      animate={{ filter: 'blur(0px)', opacity: 1, y: 0 }}
-                      transition={{
-                        duration: 0.55,
-                        delay: 0.12 + i * 0.05,
-                        ease: [0.19, 1.0, 0.22, 1.0]
+                {!currentDraft ? (
+                  <>
+                    <div
+                    ref={heroRef}
+                    className="hero-card"
+                    onMouseMove={e => {
+                      if (!heroRef.current) return;
+                      const rect = heroRef.current.getBoundingClientRect();
+                      const x = e.clientX - rect.left;
+                      const y = e.clientY - rect.top;
+                      heroRef.current.style.setProperty('--spotlight-x', `${x}px`);
+                      heroRef.current.style.setProperty('--spotlight-y', `${y}px`);
+                    }}
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      maxWidth: '780px',
+                      margin: '1.5rem auto',
+                      padding: '2.5rem 1.5rem',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      overflow: 'hidden',
+                      background: 'radial-gradient(650px circle at var(--spotlight-x, 50%) var(--spotlight-y, 35%), rgba(215, 38, 61, 0.08), rgba(255, 214, 10, 0.03) 40%, transparent 70%)',
+                      border: '1px solid var(--color-docket-border)',
+                      boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5)'
+                    }}
+                  >
+                    {/* Lightweight Tactile Grid Texture */}
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        pointerEvents: 'none',
+                        opacity: 0.35,
+                        zIndex: 0,
+                        backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px)',
+                        backgroundSize: '20px 20px'
                       }}
-                      style={{ display: 'inline-block' }}
+                    />
+
+                    {/* Center Interactive Gov Core Gyroscope Graphic */}
+                    <div style={{ marginBottom: '1.25rem', position: 'relative', zIndex: 1, width: '100%', display: 'flex', justifyContent: 'center' }}>
+                      <GovernanceGyroscope
+                        status={isEvaluating ? 'scanning' : 'active'}
+                        isScanning={isEvaluating}
+                        scanResult={scanResult}
+                        size={240}
+                      />
+                    </div>
+
+                    {/* Clean Serif Headline — Rock-solid Typography with Zero Word Overlap */}
+                    <h1
+                      style={{
+                        fontFamily: 'var(--font-serif)',
+                        fontSize: 'clamp(1.75rem, 3.8vw, 2.35rem)',
+                        color: 'var(--color-paper-light)',
+                        textAlign: 'center',
+                        margin: '0 auto 0.75rem auto',
+                        maxWidth: '640px',
+                        lineHeight: 1.25,
+                        fontWeight: 800
+                      }}
                     >
-                      {word}
-                    </motion.span>
-                  ))}
-                </h1>
+                      Upload or Paste Copy for Brand Governance Review
+                    </h1>
 
-                {/* Subtext Fade Up */}
-                <motion.p
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.58, ease: [0.19, 1.0, 0.22, 1.0] }}
-                  style={{
-                    fontSize: '0.92rem',
-                    color: 'var(--color-steel)',
-                    textAlign: 'center',
-                    maxWidth: '560px',
-                    lineHeight: '1.6',
-                    marginBottom: '1.75rem'
-                  }}
-                >
-                  Upload your draft copy or promotional text below. Parakh will evaluate it dynamically against {currentClient.name}'s guideline clauses, prohibited terminology, and pricing fact sheets.
-                </motion.p>
+                    {/* Subtext */}
+                    <p
+                      style={{
+                        fontSize: '0.92rem',
+                        color: 'var(--color-steel)',
+                        textAlign: 'center',
+                        maxWidth: '560px',
+                        lineHeight: '1.6',
+                        margin: '0 auto 1.75rem auto'
+                      }}
+                    >
+                      Upload your draft copy or promotional text below. Parakh will evaluate it dynamically against {currentClient.name}'s guideline clauses, prohibited terminology, and pricing fact sheets.
+                    </p>
 
-                {/* Interactive Drag-and-Drop & Auto-Typing Upload Hub */}
-                <InteractiveUploadZone
-                  onEvaluate={handleEvaluateFromZone}
-                  isEvaluating={isEvaluating}
-                  clientName={currentClient.name}
-                />
-              </div>
+                    {evalErrorNotice && (
+                      <div
+                        style={{
+                          backgroundColor: 'rgba(215, 38, 61, 0.15)',
+                          border: '1px solid var(--color-stamp-red)',
+                          color: 'var(--color-stamp-red)',
+                          padding: '0.75rem 1.25rem',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          marginBottom: '1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <span>⚠️ {evalErrorNotice}</span>
+                        <button
+                          onClick={() => setEvalErrorNotice(null)}
+                          style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1rem' }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    )}
 
-              {/* SCROLL-DRIVEN HOW PARAKH WORKS WALKTHROUGH */}
-              <HowParakhWorks />
-            </>
-          ) : (
-              /* WHEN USER HAS SUBMITTED: SHOW STREAMLINED REVIEW WORKSPACE */
-              <ReviewWorkspace
+                    {/* Interactive Drag-and-Drop & Auto-Typing Upload Hub */}
+                    <InteractiveUploadZone
+                      onEvaluate={handleEvaluateFromZone}
+                      isEvaluating={isEvaluating}
+                      clientName={currentClient.name}
+                    />
+                  </div>
+
+                  {/* SCROLL-DRIVEN HOW PARAKH WORKS WALKTHROUGH */}
+                  <HowParakhWorks />
+                </>
+              ) : (
+                  /* WHEN USER HAS SUBMITTED: SHOW STREAMLINED REVIEW WORKSPACE */
+                  <ReviewWorkspace
+                    clientId={currentClient.id}
+                    clientName={currentClient.name}
+                    draftId={currentDraft.id}
+                    title={currentDraft.title}
+                    channel={currentDraft.channel}
+                    initialText={currentDraft.text}
+                    initialFindings={currentDraft.findings}
+                    aiStatus={currentDraft.ai_status}
+                    aiNotice={currentDraft.ai_notice}
+                    fromCache={currentDraft.from_cache}
+                    onNewReviewRequested={() => setCurrentDraft(null)}
+                  />
+                )}
+              </>
+            )}
+
+            {activeTab === 'ripple' && (
+              <FactRippleBoard
                 clientId={currentClient.id}
                 clientName={currentClient.name}
-                draftId={currentDraft.id}
-                title={currentDraft.title}
-                channel={currentDraft.channel}
-                initialText={currentDraft.text}
-                initialFindings={currentDraft.findings}
-                onNewReviewRequested={() => setCurrentDraft(null)}
-                onDraftApproved={() => {
-                  alert(`✓ Copy "${currentDraft.title}" officially approved with sealed compliance docket.`);
-                }}
               />
             )}
-          </>
-        )}
 
-        {activeTab === 'ripple' && (
-          <FactRippleBoard
-            clientId={currentClient.id}
-            clientName={currentClient.name}
-          />
-        )}
+            {activeTab === 'debugger' && (
+              <GuidelineDebuggerView
+                clientId={currentClient.id}
+                clientName={currentClient.name}
+              />
+            )}
 
-        {activeTab === 'debugger' && (
-          <GuidelineDebuggerView
-            clientId={currentClient.id}
-            clientName={currentClient.name}
-          />
-        )}
-
-        {activeTab === 'about_ai' && <AboutAiView />}
+            {activeTab === 'about_ai' && <AboutAiView />}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       {/* FOOTER */}
       <footer
+        className="app-footer"
         style={{
           borderTop: '1px solid var(--color-docket-border)',
           padding: '1rem 2rem',
@@ -371,13 +401,13 @@ export default function App() {
           color: 'var(--color-steel)',
           backgroundColor: 'var(--color-ink-surface)',
           flexWrap: 'wrap',
-          gap: '1rem'
+          gap: '0.75rem'
         }}
       >
         <div>
           <strong>Parakh (परख)</strong> — The Memory of Every Brand Decision.
         </div>
-        <div style={{ display: 'flex', gap: '1.5rem', fontFamily: 'var(--font-mono)' }}>
+        <div style={{ display: 'flex', gap: '1rem', fontFamily: 'var(--font-mono)', flexWrap: 'wrap' }}>
           <span>VAULT: {currentClient.name}</span>
           <span>AUTH: {authUser ? 'SUPABASE' : 'GUEST'}</span>
           <span>CITATION GATE: ENFORCED</span>
@@ -407,6 +437,27 @@ export default function App() {
         isOpen={isQuickGuideOpen}
         onClose={() => setIsQuickGuideOpen(false)}
       />
+
+      {/* Purposeful Spring-in Toasts */}
+      <ToastContainer />
+
+      {/* Custom Cursor (Dot + Ring, Magnifier on Interactive, Stamp on Findings; Disabled on Touch) */}
+      <CustomCursor />
+
+      {/* Responsive Styles for App Viewports */}
+      <style>{`
+        @media (max-width: 640px) {
+          .hero-card {
+            padding: 1.5rem 0.85rem !important;
+            margin: 0.75rem auto !important;
+            border-radius: 8px !important;
+          }
+          .app-footer {
+            padding: 0.75rem 1rem !important;
+            font-size: 0.75rem !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
