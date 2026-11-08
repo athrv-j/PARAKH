@@ -1,0 +1,9 @@
+node_modules
+web/node_modules
+server/node_modules
+.git
+.github
+*.log
+parakh.db-shm
+parakh.db-wal
+.DS_Store
