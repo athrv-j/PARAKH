@@ -299,8 +299,8 @@ export const Header: React.FC<HeaderProps> = ({
               whiteSpace: 'nowrap'
             }}
           >
-            <span>⚡</span>
-            <span>{authUser ? authUser.email.split('@')[0] : 'Supabase Auth'}</span>
+            <span>{authUser ? '👤' : '⚡'}</span>
+            <span>{authUser ? `${authUser.email.split('@')[0]} (${authUser.role || 'reviewer'})` : 'Auth / Sign In'}</span>
           </motion.button>
 
           {/* Ingest Guidelines Button */}

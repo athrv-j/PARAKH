@@ -11,9 +11,11 @@ CREATE TABLE IF NOT EXISTS clients (
 -- 2. Users Table
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
+    email TEXT UNIQUE,
+    password_hash TEXT,
     name TEXT NOT NULL,
     role TEXT NOT NULL CHECK(role IN ('creator', 'manager', 'reviewer', 'client_viewer')),
-    client_access TEXT NOT NULL DEFAULT '[]', -- JSON array of client_ids
+    client_access TEXT NOT NULL DEFAULT '["client_kavach","client_vyapar","client_mitti"]',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

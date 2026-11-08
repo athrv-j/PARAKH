@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getSupabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { getSupabase } from '../lib/supabaseClient';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -15,19 +15,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const isConfigured = isSupabaseConfigured();
 
   useEffect(() => {
+    // 1. Check local Parakh session
+    try {
+      const stored = localStorage.getItem('parakh_auth_user');
+      if (stored) {
+        const u = JSON.parse(stored);
+        setCurrentUser(u);
+        if (onAuthStateChange) onAuthStateChange(u);
+        return;
+      }
+    } catch {}
+
+    // 2. Supabase fallback
     const client = getSupabase();
     if (client) {
       client.auth.getSession().then(({ data: { session } }) => {
-        setCurrentUser(session?.user ?? null);
-        if (onAuthStateChange) onAuthStateChange(session?.user ?? null);
+        if (session?.user) {
+          setCurrentUser(session.user);
+          if (onAuthStateChange) onAuthStateChange(session.user);
+        }
       });
 
       const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
-        setCurrentUser(session?.user ?? null);
-        if (onAuthStateChange) onAuthStateChange(session?.user ?? null);
+        if (session?.user) {
+          setCurrentUser(session.user);
+          if (onAuthStateChange) onAuthStateChange(session.user);
+        }
       });
 
       return () => subscription.unsubscribe();
@@ -40,8 +55,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
     const demoUser = {
       id: 'demo-reviewer-01',
       email: 'lead.reviewer@agency.com',
-      user_metadata: { role: 'reviewer', name: 'Lead Brand Reviewer' }
+      role: 'reviewer',
+      name: 'Lead Brand Reviewer'
     };
+    localStorage.setItem('parakh_auth_token', 'test-token:reviewer:client_kavach,client_vyapar,client_mitti:demo-reviewer-01:lead.reviewer@agency.com');
+    localStorage.setItem('parakh_auth_user', JSON.stringify(demoUser));
     setCurrentUser(demoUser);
     if (onAuthStateChange) onAuthStateChange(demoUser);
     setSuccessMessage('✓ Logged in as Demo Lead Reviewer!');
@@ -52,12 +70,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
     e.preventDefault();
     setErrorMessage('');
     setSuccessMessage('');
-    const client = getSupabase();
-
-    if (!client) {
-      setErrorMessage('Supabase Cloud is not configured on this instance. Click "Continue as Demo Reviewer" below to test authenticated workflows.');
-      return;
-    }
 
     if (!email || !password) {
       setErrorMessage('Email and password are required.');
@@ -66,26 +78,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
 
     setLoading(true);
     try {
-      if (isSignUp) {
-        const { data, error } = await client.auth.signUp({
-          email,
-          password
-        });
-        if (error) throw error;
-        setSuccessMessage('✓ Registration submitted! Please check your email or sign in.');
-        if (data.user) {
-          setCurrentUser(data.user);
-          if (onAuthStateChange) onAuthStateChange(data.user);
-        }
-      } else {
-        const { data, error } = await client.auth.signInWithPassword({
-          email,
-          password
-        });
-        if (error) throw error;
-        setSuccessMessage('✓ Signed in successfully!');
+      const endpoint = isSignUp ? '/api/auth/register' : '/api/auth/login';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          role: 'reviewer'
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || data.error || 'Authentication failed');
+      }
+
+      if (data.token && data.user) {
+        localStorage.setItem('parakh_auth_token', data.token);
+        localStorage.setItem('parakh_auth_user', JSON.stringify(data.user));
         setCurrentUser(data.user);
         if (onAuthStateChange) onAuthStateChange(data.user);
+        setSuccessMessage(isSignUp ? '✓ Account created and signed in!' : '✓ Signed in successfully!');
         setTimeout(onClose, 800);
       }
     } catch (err: any) {
@@ -96,6 +110,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
   };
 
   const handleSignOut = async () => {
+    localStorage.removeItem('parakh_auth_token');
+    localStorage.removeItem('parakh_auth_user');
     const client = getSupabase();
     if (client) {
       await client.auth.signOut();
@@ -145,7 +161,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
         >
           <div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-highlighter)', letterSpacing: '1px' }}>
-              ⚡ SUPABASE AUTH & CLOUD VAULT
+              ⚡ PARAKH VAULT AUTHENTICATION
             </div>
             <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.3rem', color: 'var(--color-paper-light)', margin: '0.2rem 0 0 0' }}>
               {currentUser ? 'User Session Active' : isSignUp ? 'Create Parakh Account' : 'Sign In to Brand Vault'}
@@ -294,7 +310,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
                 className="btn btn-primary"
                 style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem', fontWeight: 600 }}
               >
-                {loading ? 'Authenticating...' : isSignUp ? 'Register with Supabase' : 'Sign In with Supabase'}
+                {loading ? 'Authenticating...' : isSignUp ? 'Create Account' : 'Sign In'}
               </button>
 
               <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -322,24 +338,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
             </form>
           )}
 
-          {!isConfigured && (
-            <div
-              style={{
-                marginTop: '1.5rem',
-                padding: '0.85rem 1rem',
-                border: '1px solid var(--color-docket-border)',
-                borderRadius: '4px',
-                backgroundColor: 'rgba(255, 255, 255, 0.03)'
-              }}
-            >
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-highlighter)', marginBottom: '0.25rem', letterSpacing: '1px' }}>
-                🔒 ZERO-SECRETS PRODUCTION ENVIRONMENT
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--color-steel)', margin: 0, lineHeight: '1.4' }}>
-                Supabase credentials must be configured via environment variables (<code style={{ color: 'var(--color-paper-light)' }}>VITE_SUPABASE_URL</code> and <code style={{ color: 'var(--color-paper-light)' }}>VITE_SUPABASE_ANON_KEY</code>). Client storage of API keys is disabled for security.
-              </p>
+          <div
+            style={{
+              marginTop: '1.5rem',
+              padding: '0.85rem 1rem',
+              border: '1px solid var(--color-docket-border)',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(255, 255, 255, 0.03)'
+            }}
+          >
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: 'var(--color-highlighter)', marginBottom: '0.25rem', letterSpacing: '1px' }}>
+              🔒 ZERO-SECRETS ENCRYPTED VAULT AUTHENTICATION
             </div>
-          )}
+            <p style={{ fontSize: '0.78rem', color: 'var(--color-steel)', margin: 0, lineHeight: '1.4' }}>
+              Parakh provides built-in cryptographic authentication with salted scrypt hashing, signed JWT tokens, and tenant vault role enforcement (Creator, Reviewer, Manager).
+            </p>
+          </div>
         </div>
       </div>
     </div>

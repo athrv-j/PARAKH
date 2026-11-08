@@ -77,15 +77,22 @@ export default function App() {
   }, []);
 
 
-  // Listen for Supabase Auth state
+  // Restore Parakh Auth Session from LocalStorage & Supabase fallback
   useEffect(() => {
+    try {
+      const stored = localStorage.getItem('parakh_auth_user');
+      if (stored) {
+        setAuthUser(JSON.parse(stored));
+      }
+    } catch {}
+
     const client = getSupabase();
     if (client) {
       client.auth.getSession().then(({ data: { session } }) => {
-        setAuthUser(session?.user ?? null);
+        if (session?.user) setAuthUser(session.user);
       });
       const { data: { subscription } } = client.auth.onAuthStateChange((_event, session) => {
-        setAuthUser(session?.user ?? null);
+        if (session?.user) setAuthUser(session.user);
       });
       return () => subscription.unsubscribe();
     }

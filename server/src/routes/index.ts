@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import clientsRouter from './clients.js';
 import reviewRouter from './review.js';
+import authRouter from './auth.js';
 import { getAboutAiManifest } from '../privacy/aboutAi.js';
 
 const apiRouter = Router();
 
+apiRouter.use('/auth', authRouter);
 apiRouter.use('/clients', clientsRouter);
 apiRouter.use('/review', reviewRouter);
 

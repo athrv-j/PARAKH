@@ -14,6 +14,16 @@ function assertClientId(clientId: unknown): asserts clientId is string {
   }
 }
 
+export interface UserRecord {
+  id: string;
+  email: string;
+  password_hash: string;
+  name: string;
+  role: 'creator' | 'manager' | 'reviewer' | 'client_viewer';
+  client_access: string;
+  created_at?: string;
+}
+
 export interface ClientRecord {
   id: string;
   name: string;
@@ -292,5 +302,35 @@ export class VaultDb {
     `);
     const id = `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     stmt.run(id, clientId, actor, action, target, details ? JSON.stringify(details) : null);
+  }
+
+  // --- User Authentication & Management ---
+  getUserByEmail(email: string): UserRecord | null {
+    const row = this.db
+      .prepare('SELECT * FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1')
+      .get(email);
+    return (row as unknown as UserRecord) || null;
+  }
+
+  getUserById(id: string): UserRecord | null {
+    const row = this.db
+      .prepare('SELECT * FROM users WHERE id = ? LIMIT 1')
+      .get(id);
+    return (row as unknown as UserRecord) || null;
+  }
+
+  createUser(user: Omit<UserRecord, 'created_at'>): void {
+    const stmt = this.db.prepare(`
+      INSERT INTO users (id, email, password_hash, name, role, client_access)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(
+      user.id,
+      user.email,
+      user.password_hash,
+      user.name,
+      user.role,
+      typeof user.client_access === 'string' ? user.client_access : JSON.stringify(user.client_access)
+    );
   }
 }

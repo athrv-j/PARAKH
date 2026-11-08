@@ -40,4 +40,12 @@ export function runMigrations(db?: DatabaseSync): void {
   }
   const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
   targetDb.exec(schemaSql);
+
+  // Safe schema migrations for existing SQLite databases
+  try {
+    targetDb.exec('ALTER TABLE users ADD COLUMN email TEXT;');
+  } catch {}
+  try {
+    targetDb.exec('ALTER TABLE users ADD COLUMN password_hash TEXT;');
+  } catch {}
 }
