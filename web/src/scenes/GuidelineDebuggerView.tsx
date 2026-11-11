@@ -187,7 +187,8 @@ const ClauseStripItem: React.FC<{
   isSelected: boolean;
   onSelect: () => void;
   onAccept: (clauseId: string) => void;
-}> = ({ clause, index, isSelected, onSelect, onAccept }) => {
+  clientId: string;
+}> = ({ clause, index, isSelected, onSelect, onAccept, clientId }) => {
   const animatedScore = useCountUp(clause.ambiguity_score, 800);
   const isHealed = !!clause.isHealed;
 
@@ -198,6 +199,44 @@ const ClauseStripItem: React.FC<{
 
   const [isShaking, setIsShaking] = useState(false);
   const [showStamp, setShowStamp] = useState(false);
+  const [impactData, setImpactData] = useState<null | {
+    total_drafts_checked: number;
+    drafts_with_findings_before: number;
+    drafts_with_findings_after: number;
+    findings_resolved: number;
+    net_improvement: number;
+    affected_drafts: Array<{ draft_id: string; draft_title: string; findings_before: number; findings_after: number; delta: number }>;
+  }>(null);
+  const [replayLoading, setReplayLoading] = useState(false);
+  const [replayError, setReplayError] = useState('');
+
+  const handlePreviewImpact = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!clause.proposed_rewrite) return;
+    setReplayLoading(true);
+    setReplayError('');
+    try {
+      const token = localStorage.getItem('parakh_auth_token');
+      const res = await fetch(`/api/review/clients/${clientId}/debugger/replay-impact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({ clauseId: clause.clause_id, proposedText: clause.proposed_rewrite })
+      });
+      const data = await res.json();
+      if (data.success && data.impact) {
+        setImpactData(data.impact);
+      } else {
+        setReplayError('Could not load impact data.');
+      }
+    } catch {
+      setReplayError('Network error loading impact preview.');
+    } finally {
+      setReplayLoading(false);
+    }
+  };
 
   const handleAcceptClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -530,23 +569,111 @@ const ClauseStripItem: React.FC<{
                 ✓ RATIFIED & DEPLOYED // Active Version {clause.version} in Brand Vault
               </div>
             ) : (
-              <button
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '0.65rem 1rem',
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-                onClick={handleAcceptClick}
-                aria-label={`Accept rewrite as version ${clause.version + 1}`}
-              >
-                🏛️ Accept Rewrite as Version {clause.version + 1} (Ratify Rule)
-              </button>
+              <>
+                {/* IMPACT REPLAY PANEL */}
+                {clause.proposed_rewrite && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    {!impactData ? (
+                      <button
+                        className="btn"
+                        style={{
+                          width: '100%',
+                          padding: '0.6rem 1rem',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          backgroundColor: 'rgba(255, 214, 10, 0.08)',
+                          border: '1px dashed var(--color-highlighter)',
+                          color: 'var(--color-highlighter)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                          marginBottom: '0.75rem'
+                        }}
+                        onClick={handlePreviewImpact}
+                        disabled={replayLoading}
+                        aria-label="Preview impact of this rewrite on stored drafts"
+                      >
+                        {replayLoading ? '⏳ Running impact analysis...' : '🔬 Preview Impact on Stored Drafts (Before Accepting)'}
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                          border: '1px solid var(--color-docket-border)',
+                          borderRadius: '6px',
+                          padding: '1rem',
+                          marginBottom: '0.75rem'
+                        }}
+                      >
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-highlighter)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.75rem', letterSpacing: '1px' }}>
+                          📊 IMPACT REPLAY — {impactData.total_drafts_checked} Draft{impactData.total_drafts_checked !== 1 ? 's' : ''} Analysed
+                        </div>
+
+                        {/* Summary Row */}
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                          <div style={{ flex: 1, minWidth: '120px', backgroundColor: 'rgba(215, 38, 61, 0.1)', border: '1px solid rgba(215,38,61,0.4)', borderRadius: '5px', padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--color-steel)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>Findings Before</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#FF7A7A', fontFamily: 'var(--font-mono)' }}>{impactData.drafts_with_findings_before}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--color-steel)' }}>drafts flagged</div>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', fontSize: '1.2rem', color: 'var(--color-steel)' }}>→</div>
+                          <div style={{ flex: 1, minWidth: '120px', backgroundColor: 'rgba(47, 191, 113, 0.1)', border: '1px solid rgba(47,191,113,0.4)', borderRadius: '5px', padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--color-steel)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>Findings After</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-verified-green)', fontFamily: 'var(--font-mono)' }}>{impactData.drafts_with_findings_after}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--color-steel)' }}>drafts flagged</div>
+                          </div>
+                          <div style={{ flex: 1, minWidth: '120px', backgroundColor: 'rgba(255,214,10,0.08)', border: '1px solid rgba(255,214,10,0.4)', borderRadius: '5px', padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--color-steel)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>Net Resolved</div>
+                            <div style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--color-highlighter)', fontFamily: 'var(--font-mono)' }}>+{impactData.findings_resolved}</div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--color-steel)' }}>findings cleared</div>
+                          </div>
+                        </div>
+
+                        {/* Per-draft table */}
+                        {impactData.affected_drafts.length > 0 && (
+                          <div>
+                            <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Affected Drafts:</div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                              {impactData.affected_drafts.map(d => (
+                                <div key={d.draft_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', padding: '4px 6px', borderRadius: '3px', backgroundColor: 'rgba(255,255,255,0.03)' }}>
+                                  <span style={{ color: 'var(--color-paper-light)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.draft_title}</span>
+                                  <span style={{ fontFamily: 'var(--font-mono)', color: d.delta < 0 ? 'var(--color-verified-green)' : d.delta > 0 ? '#FF7A7A' : 'var(--color-steel)', fontWeight: 600, marginLeft: '8px', flexShrink: 0 }}>
+                                    {d.findings_before}→{d.findings_after} {d.delta < 0 ? `(${d.delta})` : d.delta > 0 ? `(+${d.delta})` : '(no change)'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                    {replayError && (
+                      <div style={{ fontSize: '0.78rem', color: 'var(--color-stamp-red)', marginBottom: '0.5rem' }}>{replayError}</div>
+                    )}
+                  </div>
+                )}
+
+                <button
+                  className="btn btn-primary"
+                  style={{
+                    width: '100%',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                  onClick={handleAcceptClick}
+                  aria-label={`Accept rewrite as version ${clause.version + 1}`}
+                >
+                  🏛️ Accept Rewrite as Version {clause.version + 1} (Ratify Rule)
+                </button>
+              </>
             )}
           </motion.div>
         )}
@@ -744,6 +871,7 @@ export const GuidelineDebuggerView: React.FC<GuidelineDebuggerProps> = ({
               isSelected={clause.clause_id === selectedClauseId}
               onSelect={() => setSelectedClauseId(clause.clause_id)}
               onAccept={handleAccept}
+              clientId={clientId}
             />
           ))}
         </div>

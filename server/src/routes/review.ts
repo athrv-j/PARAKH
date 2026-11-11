@@ -286,6 +286,49 @@ router.post(
   }
 );
 
+// Impact Replay: Preview how a proposed rewrite would affect stored drafts (read-only)
+router.post(
+  '/clients/:id/debugger/replay-impact',
+  authenticateUser,
+  validateParams(ClientIdParamSchema),
+  requireClientVault,
+  (req: Request, res: Response) => {
+    try {
+      const clientId = req.params.id as string;
+      const { clauseId, proposedText } = req.body;
+
+      if (!clauseId || !proposedText) {
+        res.status(400).json({ error: 'ValidationError', message: 'clauseId and proposedText are required.' });
+        return;
+      }
+
+      const result = debuggerService.replayClauseImpact(clientId, clauseId, proposedText);
+      res.json({ success: true, impact: result });
+    } catch (error: any) {
+      console.error('Error in /debugger/replay-impact:', error);
+      res.status(500).json({ error: 'ReplayError', message: error.message || 'Failed to run impact replay.' });
+    }
+  }
+);
+
+// Clause Version History: Get all versions (active + retired) for a clause
+router.get(
+  '/clients/:id/clauses/:clauseId/versions',
+  authenticateUser,
+  validateParams(ClientIdParamSchema),
+  requireClientVault,
+  (req: Request, res: Response) => {
+    try {
+      const clientId = req.params.id as string;
+      const clauseId = req.params.clauseId as string;
+      const history = debuggerService.getClauseVersionHistory(clientId, clauseId);
+      res.json(history);
+    } catch (error: any) {
+      res.status(500).json({ error: 'VersionHistoryError', message: 'Failed to retrieve clause version history.' });
+    }
+  }
+);
+
 // Get Fact Ripple Graph
 router.get(
   '/clients/:id/facts/graph',
