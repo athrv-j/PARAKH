@@ -55,6 +55,16 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
   const [dryRun, setDryRun] = useState(false);
   const [ghostPreviewActive, setGhostPreviewActive] = useState(false);
   const [ghostSimulatedFacts, setGhostSimulatedFacts] = useState<{ factId: string; prevValue: string; nextValue: string } | null>(null);
+  const [expiringFacts, setExpiringFacts] = useState<Array<{
+    fact_id: string;
+    label: string;
+    value: string;
+    valid_until: string;
+    days_remaining: number;
+    linked_drafts_count: number;
+    affected_draft_titles: string[];
+  }>>([]);
+  const [showExpiringDetails, setShowExpiringDetails] = useState(false);
 
   // View mode: 'board' (physical canvas) or 'list' (accessible fallback)
   const [viewMode, setViewMode] = useState<'board' | 'list'>('board');
@@ -86,7 +96,10 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
 
   // Synchronize with backend API if available
   useEffect(() => {
-    fetch(`/api/review/clients/${clientId}/facts/graph`)
+    const token = localStorage.getItem('parakh_auth_token');
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
+    fetch(`/api/review/clients/${clientId}/facts/graph`, { headers: authHeaders })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (data && data.facts && data.facts.length > 0) {
@@ -99,6 +112,16 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
             y: 150 + i * 170
           }));
           setFacts(apiFacts);
+        }
+      })
+      .catch(() => {});
+
+    // Proactive Expiring Facts Radar (Improvement 3)
+    fetch(`/api/review/clients/${clientId}/facts/expiring?days=60`, { headers: authHeaders })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (data && data.expiring_facts) {
+          setExpiringFacts(data.expiring_facts);
         }
       })
       .catch(() => {});
@@ -355,7 +378,26 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
         </div>
 
         {/* VIEW MODE TOGGLE (Board vs Accessible Plain List) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          {/* AUTO-LINKING ACTIVE BADGE */}
+          <div
+            style={{
+              padding: '0.35rem 0.75rem',
+              borderRadius: '4px',
+              backgroundColor: 'rgba(47, 191, 113, 0.12)',
+              border: '1px solid var(--color-verified-green)',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '0.72rem',
+              color: 'var(--color-verified-green)',
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            ✓ AUTO-LINKING: ACTIVE
+          </div>
+
           <button
             type="button"
             className="btn"
@@ -386,6 +428,105 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
           </button>
         </div>
       </div>
+
+      {/* PROACTIVE EXPIRING FACTS RADAR BANNER (Improvement 3) */}
+      {expiringFacts.length > 0 && (
+        <div
+          style={{
+            backgroundColor: 'rgba(255, 214, 10, 0.08)',
+            border: '1.5px solid var(--color-highlighter)',
+            borderRadius: '8px',
+            padding: '0.85rem 1.25rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.5rem'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1rem' }}>⚠️</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem', fontWeight: 700, color: 'var(--color-highlighter)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                EXPIRING FACTS RADAR: {expiringFacts.length} Fact{expiringFacts.length !== 1 ? 's' : ''} Expiring Soon
+              </span>
+            </div>
+            <button
+              className="btn"
+              onClick={() => setShowExpiringDetails(!showExpiringDetails)}
+              style={{
+                fontSize: '0.72rem',
+                padding: '0.3rem 0.7rem',
+                backgroundColor: 'rgba(255, 214, 10, 0.15)',
+                border: '1px solid var(--color-highlighter)',
+                color: 'var(--color-highlighter)',
+                fontFamily: 'var(--font-mono)'
+              }}
+            >
+              {showExpiringDetails ? 'Hide Blast Radius' : 'Inspect Blast Radius 🔍'}
+            </button>
+          </div>
+
+          <div style={{ fontSize: '0.82rem', color: 'var(--color-paper-light)', lineHeight: 1.45 }}>
+            Automated claim scan identified promotional offers and price deadlines approaching expiration. Any draft claiming these facts will require immediate updates when revised.
+          </div>
+
+          {/* Expanded Blast Radius Cards */}
+          {showExpiringDetails && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed var(--color-docket-border)' }}>
+              {expiringFacts.map(ef => (
+                <div
+                  key={ef.fact_id}
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <div>
+                    <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--color-highlighter)', fontWeight: 700, fontSize: '0.82rem' }}>
+                      {ef.label} ({ef.value})
+                    </span>
+                    <span style={{ fontSize: '0.74rem', color: 'var(--color-steel)', marginLeft: '8px' }}>
+                      Expires: {ef.valid_until} ({ef.days_remaining <= 0 ? 'EXPIRED' : `${ef.days_remaining} days left`})
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span
+                      style={{
+                        padding: '2px 8px',
+                        borderRadius: '3px',
+                        backgroundColor: ef.linked_drafts_count > 0 ? 'rgba(215, 38, 61, 0.2)' : 'rgba(47, 191, 113, 0.15)',
+                        color: ef.linked_drafts_count > 0 ? '#FF7A7A' : 'var(--color-verified-green)',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.72rem',
+                        fontWeight: 700
+                      }}
+                    >
+                      Blast Radius: {ef.linked_drafts_count} Draft{ef.linked_drafts_count !== 1 ? 's' : ''}
+                    </span>
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        setSelectedFactId(ef.fact_id);
+                        setNewValue(ef.value);
+                        setNewExpiry(ef.valid_until);
+                        setDryRun(true);
+                      }}
+                      style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem' }}
+                    >
+                      Dry-Run Blast
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* FACT EDIT TOOLBAR */}
       <div

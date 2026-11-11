@@ -1,12 +1,28 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import path from 'node:path';
+import fs from 'node:fs';
+import { DatabaseSync } from 'node:sqlite';
 import { VaultDb } from '../src/db/vaultDb.js';
 import { runPrecedentBenchmark } from '../src/scripts/evaluatePrecedents.js';
+import { loadSampleDataIntoDb } from '../src/scripts/seedSampleData.js';
 
 describe('Round 3 Flagship: Layered Precedent Engine Accuracy Benchmark', () => {
   let vault: VaultDb;
+  let testDbPath: string;
 
   beforeAll(() => {
-    vault = new VaultDb();
+    testDbPath = path.resolve(process.cwd(), `test_benchmark_${Date.now()}_${Math.random().toString(36).substring(2, 6)}.db`);
+    loadSampleDataIntoDb(testDbPath);
+    const db = new DatabaseSync(testDbPath);
+    vault = new VaultDb(db as any);
+  });
+
+  afterAll(() => {
+    try {
+      if (fs.existsSync(testDbPath)) {
+        fs.unlinkSync(testDbPath);
+      }
+    } catch {}
   });
 
   it('evaluates layered precedent retrieval across 20 labeled agency cases', () => {

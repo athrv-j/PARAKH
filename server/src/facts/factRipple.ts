@@ -1,4 +1,4 @@
-import { VaultDb, FactRecord, DraftRecord } from '../db/vaultDb.js';
+import { VaultDb, FactRecord } from '../db/vaultDb.js';
 
 export interface AffectedDraftItem {
   draft_id: string;
@@ -20,6 +20,35 @@ export interface FactRippleResult {
   dry_run: boolean;
   affected_items_count: number;
   affected_drafts: AffectedDraftItem[];
+}
+
+export interface AutoLinkResult {
+  draft_version_id: string;
+  total_claims_found: number;
+  linked_count: number;
+  unmatched_count: number;
+  linked_claims: Array<{
+    claim_span: string;
+    matched_fact_id: string;
+    matched_fact_label: string;
+    link_method: 'exact_value' | 'numeric_match' | 'date_match' | 'label_keyword';
+    confidence: 'high' | 'medium' | 'low';
+  }>;
+  unmatched_claims: string[];
+}
+
+export interface ExpiringFactsResult {
+  client_id: string;
+  expiring_within_days: number;
+  expiring_facts: Array<{
+    fact_id: string;
+    label: string;
+    value: string;
+    valid_until: string;
+    days_remaining: number;
+    linked_drafts_count: number;
+    affected_draft_titles: string[];
+  }>;
 }
 
 export class FactRippleEngine {
@@ -161,6 +190,221 @@ export class FactRippleEngine {
     return {
       expiredFactsCount: expiredFacts.length,
       flaggedDraftsCount: flaggedCount
+    };
+  }
+
+  /**
+   * Automatic Claim-to-Fact Extraction and Linking (Improvement 3)
+   * Scans draft text for pricing, dates, percentages, codes, and promotional terms,
+   * automatically links them to approved brand vault facts, and records links in `fact_links`.
+   */
+  autoLinkClaimsToFacts(
+    clientId: string,
+    draftVersionId: string,
+    draftText: string
+  ): AutoLinkResult {
+    const db = (this.vault as any).db;
+    const facts = this.vault.getFacts(clientId);
+
+    const linkedClaims: AutoLinkResult['linked_claims'] = [];
+    const unmatchedClaims: string[] = [];
+    const seenFactIds = new Set<string>();
+
+    // 1. Regex candidate claim extractions
+    const priceRegex = /(?:₹|Rs\.?|INR)\s*[\d,]+(?:\.\d+)?/gi;
+    const percentRegex = /\b\d+(?:\.\d+)?\s*%/g;
+    const dateRegex = /\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}(?:st|nd|rd|th)?\s+(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember))\s+\d{4})\b/gi;
+    const codeRegex = /\b[A-Z]{2,}-[A-Z0-9]+(?:-[A-Z0-9]+)*\b/g;
+
+    const extractedMatches: Array<{ text: string; type: 'price' | 'percent' | 'date' | 'code' }> = [];
+
+    let m: RegExpExecArray | null;
+    while ((m = priceRegex.exec(draftText)) !== null) {
+      extractedMatches.push({ text: m[0].trim(), type: 'price' });
+    }
+    while ((m = percentRegex.exec(draftText)) !== null) {
+      extractedMatches.push({ text: m[0].trim(), type: 'percent' });
+    }
+    while ((m = dateRegex.exec(draftText)) !== null) {
+      extractedMatches.push({ text: m[0].trim(), type: 'date' });
+    }
+    while ((m = codeRegex.exec(draftText)) !== null) {
+      extractedMatches.push({ text: m[0].trim(), type: 'code' });
+    }
+
+    // Helper: normalize numeric amounts (e.g. "₹899" -> "899")
+    const normalizeDigits = (val: string) => val.replace(/[^\d.]/g, '');
+
+    // 2. Match extracted claims against client facts
+    for (const match of extractedMatches) {
+      const matchDigits = normalizeDigits(match.text);
+      let matchedFact: FactRecord | undefined;
+      let method: AutoLinkResult['linked_claims'][0]['link_method'] = 'exact_value';
+      let confidence: AutoLinkResult['linked_claims'][0]['confidence'] = 'high';
+
+      // Check exact value match
+      matchedFact = facts.find(f =>
+        f.value.toLowerCase().trim() === match.text.toLowerCase().trim() ||
+        draftText.includes(f.value)
+      );
+
+      if (matchedFact) {
+        method = 'exact_value';
+        confidence = 'high';
+      } else if (match.type === 'price' && matchDigits) {
+        // Numeric match
+        matchedFact = facts.find(f => normalizeDigits(f.value) === matchDigits);
+        if (matchedFact) {
+          method = 'numeric_match';
+          confidence = 'high';
+        }
+      } else if (match.type === 'date') {
+        // Date match against valid_until
+        matchedFact = facts.find(f => {
+          if (!f.valid_until) return false;
+          return f.valid_until.includes(match.text) || match.text.includes(f.valid_until);
+        });
+        if (matchedFact) {
+          method = 'date_match';
+          confidence = 'high';
+        }
+      } else if (match.type === 'code') {
+        matchedFact = facts.find(f => f.value.includes(match.text) || match.text.includes(f.value));
+        if (matchedFact) {
+          method = 'exact_value';
+          confidence = 'high';
+        }
+      }
+
+      if (matchedFact && !seenFactIds.has(matchedFact.id)) {
+        seenFactIds.add(matchedFact.id);
+        linkedClaims.push({
+          claim_span: match.text,
+          matched_fact_id: matchedFact.id,
+          matched_fact_label: matchedFact.label,
+          link_method: method,
+          confidence
+        });
+
+        // Persist into fact_links if draftVersionId is provided
+        if (draftVersionId) {
+          const existing = db.prepare(`
+            SELECT id FROM fact_links WHERE client_id = ? AND draft_version_id = ? AND fact_id = ?
+          `).get(clientId, draftVersionId, matchedFact.id);
+
+          if (!existing) {
+            this.linkClaimToFact(clientId, draftVersionId, matchedFact.id, match.text);
+          }
+        }
+      } else if (!matchedFact) {
+        if (!unmatchedClaims.includes(match.text)) {
+          unmatchedClaims.push(match.text);
+        }
+      }
+    }
+
+    // 3. Fallback: check if any fact values or labels appear directly in draft text
+    for (const fact of facts) {
+      if (seenFactIds.has(fact.id)) continue;
+
+      if (draftText.includes(fact.value)) {
+        seenFactIds.add(fact.id);
+        linkedClaims.push({
+          claim_span: fact.value,
+          matched_fact_id: fact.id,
+          matched_fact_label: fact.label,
+          link_method: 'exact_value',
+          confidence: 'high'
+        });
+
+        if (draftVersionId) {
+          const existing = db.prepare(`
+            SELECT id FROM fact_links WHERE client_id = ? AND draft_version_id = ? AND fact_id = ?
+          `).get(clientId, draftVersionId, fact.id);
+          if (!existing) {
+            this.linkClaimToFact(clientId, draftVersionId, fact.id, fact.value);
+          }
+        }
+      } else {
+        // Label keyword match (e.g. fact label "Diwali Wellness Camp" -> draft contains "Diwali Wellness")
+        const labelWords = fact.label.split(/\s+/).filter(w => w.length > 4);
+        const hasKeywordMatch = labelWords.some(w => draftText.toLowerCase().includes(w.toLowerCase()));
+        if (hasKeywordMatch && fact.valid_until && draftText.includes(fact.valid_until)) {
+          seenFactIds.add(fact.id);
+          linkedClaims.push({
+            claim_span: fact.valid_until,
+            matched_fact_id: fact.id,
+            matched_fact_label: fact.label,
+            link_method: 'date_match',
+            confidence: 'medium'
+          });
+
+          if (draftVersionId) {
+            const existing = db.prepare(`
+              SELECT id FROM fact_links WHERE client_id = ? AND draft_version_id = ? AND fact_id = ?
+            `).get(clientId, draftVersionId, fact.id);
+            if (!existing) {
+              this.linkClaimToFact(clientId, draftVersionId, fact.id, fact.valid_until);
+            }
+          }
+        }
+      }
+    }
+
+    return {
+      draft_version_id: draftVersionId,
+      total_claims_found: extractedMatches.length,
+      linked_count: linkedClaims.length,
+      unmatched_count: unmatchedClaims.length,
+      linked_claims: linkedClaims,
+      unmatched_claims: unmatchedClaims
+    };
+  }
+
+  /**
+   * Proactive Expiring Facts Radar (Improvement 3)
+   * Detects facts expiring within N days or already expired, calculates
+   * the blast radius across dependent drafts, and flags action required.
+   */
+  getExpiringFacts(clientId: string, withinDays = 30): ExpiringFactsResult {
+    const db = (this.vault as any).db;
+    const now = new Date();
+    const thresholdDate = new Date(now.getTime() + withinDays * 24 * 60 * 60 * 1000);
+    const thresholdIso = thresholdDate.toISOString().split('T')[0];
+
+    const facts = db.prepare(`
+      SELECT id, label, value, valid_until
+      FROM facts
+      WHERE client_id = ? AND valid_until IS NOT NULL AND valid_until <= ?
+      ORDER BY valid_until ASC
+    `).all(clientId, thresholdIso) as FactRecord[];
+
+    const expiringFacts: ExpiringFactsResult['expiring_facts'] = [];
+
+    for (const f of facts) {
+      if (!f.valid_until) continue;
+      const validUntilDate = new Date(f.valid_until);
+      const diffMs = validUntilDate.getTime() - now.getTime();
+      const daysRemaining = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+      // Calculate blast radius via dry run
+      const ripple = this.propagateFactChange(clientId, f.id, {}, true);
+
+      expiringFacts.push({
+        fact_id: f.id,
+        label: f.label,
+        value: f.value,
+        valid_until: f.valid_until,
+        days_remaining: daysRemaining,
+        linked_drafts_count: ripple.affected_items_count,
+        affected_draft_titles: ripple.affected_drafts.map(d => d.draft_title)
+      });
+    }
+
+    return {
+      client_id: clientId,
+      expiring_within_days: withinDays,
+      expiring_facts: expiringFacts
     };
   }
 }

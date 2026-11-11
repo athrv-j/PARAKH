@@ -223,6 +223,9 @@ router.post(
         };
       });
 
+      // Automatic Claim-to-Fact Linking (Improvement 3)
+      const autoLinkResult = ripple.autoLinkClaimsToFacts(clientId, versionId, text);
+
       res.status(201).json({
         success: true,
         ai_status: aiStatus,
@@ -237,7 +240,8 @@ router.post(
           ai_status: aiStatus,
           ai_notice: aiNotice,
           from_cache: fromCache,
-          findings: processedFindings
+          findings: processedFindings,
+          auto_linked_facts: autoLinkResult
         }
       });
     } catch (error: any) {
@@ -362,6 +366,46 @@ router.post(
       res.json({ success: true, result });
     } catch (error: any) {
       res.status(500).json({ error: 'RippleError', message: 'Failed to propagate fact change ripple.' });
+    }
+  }
+);
+
+// Proactive Expiring Facts Radar (Improvement 3)
+router.get(
+  '/clients/:id/facts/expiring',
+  authenticateUser,
+  validateParams(ClientIdParamSchema),
+  requireClientVault,
+  (req: Request, res: Response) => {
+    try {
+      const clientId = req.params.id as string;
+      const days = req.query.days ? parseInt(req.query.days as string, 10) : 30;
+      const result = ripple.getExpiringFacts(clientId, days);
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      res.status(500).json({ error: 'ExpiringFactsError', message: 'Failed to retrieve expiring facts.' });
+    }
+  }
+);
+
+// Manual Trigger for Automatic Claim-to-Fact Linking (Improvement 3)
+router.post(
+  '/clients/:id/facts/auto-link',
+  authenticateUser,
+  validateParams(ClientIdParamSchema),
+  requireClientVault,
+  (req: Request, res: Response) => {
+    try {
+      const clientId = req.params.id as string;
+      const { draftVersionId, text } = req.body;
+      if (!text) {
+        res.status(400).json({ error: 'ValidationError', message: 'Text is required for claim extraction.' });
+        return;
+      }
+      const result = ripple.autoLinkClaimsToFacts(clientId, draftVersionId || '', text);
+      res.json({ success: true, auto_linked_facts: result });
+    } catch (error: any) {
+      res.status(500).json({ error: 'AutoLinkError', message: 'Failed to auto-link claims to facts.' });
     }
   }
 );

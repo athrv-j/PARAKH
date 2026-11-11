@@ -22,6 +22,8 @@ blueprint_extracted.txt
 # Databases & local state
 *.db
 *.db-journal
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite-journal
 
