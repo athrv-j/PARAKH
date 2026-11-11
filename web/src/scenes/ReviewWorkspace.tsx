@@ -6,6 +6,7 @@ import { WordDiffViewer } from '../components/WordDiffViewer.tsx';
 import { PrecedentDrawer } from '../components/PrecedentDrawer.tsx';
 import { GovernanceGyroscope } from '../components/GovernanceGyroscope.tsx';
 import { emitToast } from '../components/ToastContainer.tsx';
+import { ComplianceCertificateModal } from '../components/ComplianceCertificateModal.tsx';
 
 export interface FindingUI {
   id: string;
@@ -144,6 +145,7 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
   // Precedent Drawer State
   const [isPrecedentDrawerOpen, setIsPrecedentDrawerOpen] = useState(false);
   const [drawerClauseId, setDrawerClauseId] = useState('C-1.1');
+  const [showCertificateModal, setShowCertificateModal] = useState(false);
 
   // SVG Connector Coordinates
   const containerRef = useRef<HTMLDivElement>(null);
@@ -630,6 +632,15 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
               + Upload Another Copy
             </button>
           )}
+
+          <button
+            className="btn btn-outline"
+            onClick={() => setShowCertificateModal(true)}
+            style={{ fontSize: '0.8rem', padding: '0.45rem 0.85rem', display: 'flex', alignItems: 'center', gap: '5px' }}
+            title="Inspect tamper-evident compliance audit certificate"
+          >
+            📜 Compliance Docket
+          </button>
 
           <button
             className={`btn ${isAllResolved ? 'btn-success' : 'btn-primary'}`}
@@ -1438,6 +1449,20 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
         onClose={() => setIsPrecedentDrawerOpen(false)}
         clauseId={drawerClauseId}
         onSavePrecedent={handleSavePrecedent}
+      />
+
+      {/* Compliance Audit Certificate Modal */}
+      <ComplianceCertificateModal
+        isOpen={showCertificateModal}
+        onClose={() => setShowCertificateModal(false)}
+        draftId={draftId}
+        draftTitle={title}
+        clientName={clientName}
+        channel={channel}
+        draftText={draftContent}
+        resolvedFindingsCount={resolvedCount}
+        clausesCited={Array.from(new Set(findings.map(f => f.source_id).filter(Boolean) as string[]))}
+        precedentsApplied={Array.from(new Set(findings.map(f => f.precedent?.precedent?.id).filter(Boolean) as string[]))}
       />
 
       {/* Responsive Breakpoint Styles for 360px, 768px, and 1280px */}

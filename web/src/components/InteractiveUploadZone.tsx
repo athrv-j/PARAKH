@@ -186,7 +186,7 @@ export const InteractiveUploadZone: React.FC<InteractiveUploadZoneProps> = ({
       {/* SAMPLE CHIP PICKERS */}
       <div style={{ marginBottom: '1.25rem' }}>
         <div style={{ fontSize: '0.7rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase', marginBottom: '0.5rem', textAlign: 'center' }}>
-          One-Click Demo Test Cases:
+          Pre-Loaded Agency Benchmark Campaigns:
         </div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', justifyContent: 'center' }}>
           {SAMPLE_CHIPS.map((sample, idx) => (

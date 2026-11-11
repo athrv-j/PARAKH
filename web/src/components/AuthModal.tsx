@@ -315,7 +315,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
 
               <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-docket-border)' }} />
-                <span style={{ fontSize: '0.72rem', color: 'var(--color-steel)', fontFamily: 'var(--font-mono)' }}>OR QUICK DEMO</span>
+                <span style={{ fontSize: '0.72rem', color: 'var(--color-steel)', fontFamily: 'var(--font-mono)' }}>ENTERPRISE EVALUATION</span>
                 <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-docket-border)' }} />
               </div>
 
@@ -333,7 +333,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onAuthSta
                   color: 'var(--color-highlighter)'
                 }}
               >
-                ⚡ Continue as Demo Reviewer (No Password Needed)
+                ⚡ Explore Sandbox Workspace (Instant Evaluator Access)
               </button>
             </form>
           )}
