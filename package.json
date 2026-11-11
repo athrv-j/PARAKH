@@ -15,6 +15,7 @@
     "test": "npm run test --workspace=server",
     "test:run": "npm run test:run --workspace=server",
     "seed:sample": "npm run seed:sample --workspace=server",
+    "eval:precedents": "npm run eval:precedents --workspace=server",
     "lint": "eslint . --ext .ts,.tsx",
     "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
   },

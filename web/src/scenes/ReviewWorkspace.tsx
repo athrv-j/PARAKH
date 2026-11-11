@@ -22,6 +22,28 @@ export interface FindingUI {
   suggested_fix?: string;
   word_diff?: Array<{ value: string; added?: boolean; removed?: boolean }>;
   from_cache?: boolean;
+  precedent?: {
+    precedent: {
+      id: string;
+      clause_id: string;
+      decision: string;
+      reason: string;
+      scope: string;
+      expiry?: string | null;
+      decided_by: string;
+    };
+    similarity_score: number;
+    precedent_applies: boolean;
+    needs_human_confirmation: boolean;
+    rationale: string;
+    is_quote_verified: boolean;
+    verified_quote?: string;
+    channel_scope_matched: boolean;
+    is_expired: boolean;
+    has_conflict: boolean;
+    conflict_details?: string;
+  } | null;
+  applicable_precedents?: any[];
   status: 'pending' | 'accepted' | 'dismissed' | 'exception_requested';
 }
 
@@ -980,7 +1002,7 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
                 const isHovered = f.id === hoveredFindingId;
                 const isFlipped = !!flippedCards[f.id];
                 const swipeDir = swipedDirections[f.id] || 'left';
-                const hasPrecedent = f.source_type === 'precedent' || !!f.source_id?.includes('PRC');
+                const hasPrecedent = Boolean(f.precedent || f.source_type === 'precedent' || f.source_id?.includes('PRC'));
 
                 return (
                   <motion.div
@@ -1157,6 +1179,58 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
                           </button>
                         </div>
 
+                        {/* Layered Precedent Badges & Verified Quote */}
+                        {f.precedent && (
+                          <div style={{ margin: '0.35rem 0', display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' }}>
+                            <span
+                              style={{
+                                backgroundColor: 'rgba(255, 183, 3, 0.15)',
+                                border: '1px solid #FFB703',
+                                color: '#FFB703',
+                                padding: '2px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.68rem',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 700
+                              }}
+                            >
+                              ⚖️ PRECEDENT: {f.precedent.precedent.id}
+                            </span>
+                            {f.precedent.is_quote_verified && (
+                              <span
+                                style={{
+                                  backgroundColor: 'rgba(47, 191, 113, 0.15)',
+                                  border: '1px solid var(--color-verified-green)',
+                                  color: 'var(--color-verified-green)',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.68rem',
+                                  fontFamily: 'var(--font-mono)',
+                                  fontWeight: 600
+                                }}
+                              >
+                                ✓ QUOTE VERIFIED: "{f.precedent.verified_quote}"
+                              </span>
+                            )}
+                            {f.precedent.has_conflict && (
+                              <span
+                                style={{
+                                  backgroundColor: 'rgba(215, 38, 61, 0.15)',
+                                  border: '1px solid var(--color-stamp-red)',
+                                  color: '#FF8A8A',
+                                  padding: '2px 8px',
+                                  borderRadius: '4px',
+                                  fontSize: '0.68rem',
+                                  fontFamily: 'var(--font-mono)',
+                                  fontWeight: 600
+                                }}
+                              >
+                                ⚠️ CONTRADICTORY RULINGS EXIST
+                              </span>
+                            )}
+                          </div>
+                        )}
+
                         {/* Flagged text */}
                         <div style={{ fontSize: '0.88rem', color: 'var(--color-paper-light)', margin: '0.4rem 0' }}>
                           <strong>Flagged:</strong>{' '}
@@ -1239,13 +1313,14 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
+                          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+                          overflowY: 'auto'
                         }}
                       >
                         <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
                             <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#FFB703' }}>
-                              ⚖️ BINDING BRAND PRECEDENT // {f.source_id || 'PRC-091'}
+                              ⚖️ BINDING BRAND PRECEDENT // {f.precedent?.precedent.id || f.source_id || 'PRC-091'}
                             </span>
                             <button
                               onClick={(e) => handleToggleFlip(f.id, e)}
@@ -1261,8 +1336,49 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
                             </button>
                           </div>
 
+                          {/* Precedent Citation Gate: Verified Quote */}
+                          {f.precedent?.is_quote_verified && (
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                backgroundColor: 'rgba(47, 191, 113, 0.15)',
+                                border: '1px solid var(--color-verified-green)',
+                                color: 'var(--color-verified-green)',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.72rem',
+                                fontFamily: 'var(--font-mono)',
+                                fontWeight: 600,
+                                margin: '0.3rem 0'
+                              }}
+                            >
+                              <span>✓ VERIFIED CITATION MATCH:</span>
+                              <strong style={{ color: '#FFFFFF' }}>"{f.precedent.verified_quote}"</strong>
+                            </div>
+                          )}
+
+                          {/* Precedent Conflict Alert */}
+                          {f.precedent?.has_conflict && (
+                            <div
+                              style={{
+                                backgroundColor: 'rgba(215, 38, 61, 0.15)',
+                                border: '1px solid var(--color-stamp-red)',
+                                color: '#FF8A8A',
+                                padding: '6px 8px',
+                                borderRadius: '4px',
+                                fontSize: '0.74rem',
+                                margin: '0.35rem 0',
+                                lineHeight: 1.4
+                              }}
+                            >
+                              ⚠️ <strong>Conflicting Case Law Warning:</strong> {f.precedent.conflict_details}
+                            </div>
+                          )}
+
                           <div style={{ fontSize: '0.85rem', color: 'var(--color-paper-light)', margin: '0.4rem 0', lineHeight: 1.5 }}>
-                            <strong>Precedent Exception Applied:</strong> Approved during previous campaign cycle for {clientName}.
+                            <strong>Precedent Ruling:</strong> {f.precedent?.precedent.reason || `Approved during previous campaign cycle for ${clientName}.`}
                           </div>
 
                           <div
@@ -1279,8 +1395,8 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
                             "{f.source_text}"
                           </div>
 
-                          <div style={{ fontSize: '0.72rem', color: 'var(--color-steel-light)', fontFamily: 'var(--font-mono)' }}>
-                            AUTHORITY: VP Brand Governance • SCOPE: Social & Email
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-steel-light)', fontFamily: 'var(--font-mono)', lineHeight: 1.4 }}>
+                            DECIDED BY: {f.precedent?.precedent.decided_by || 'VP Brand Governance'} • SCOPE: {f.precedent?.precedent.scope || 'All Channels'} • EXPIRES: {f.precedent?.precedent.expiry || 'Permanent'}
                           </div>
                         </div>
 
@@ -1293,7 +1409,7 @@ export const ReviewWorkspace: React.FC<ReviewWorkspaceProps> = ({
                               handleDismiss(f.id);
                             }}
                           >
-                            ✓ Apply Precedent & Dismiss (Swipe Away)
+                            ✓ Confirm & Apply Precedent (Human Sign-off)
                           </button>
                           <button
                             className="btn btn-outline"

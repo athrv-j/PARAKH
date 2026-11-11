@@ -184,6 +184,14 @@ router.post(
         const findingId = `find_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
         const isFindingFromCache = fromCache || (f as any).from_cache || false;
 
+        // Layered Precedent Retrieval: find applicable precedents for this finding
+        const applicablePrecedents = f.source_id
+          ? caseLaw.findApplicablePrecedents(clientId, f.source_id, f.span_text, {
+              channel: channel || 'social'
+            })
+          : [];
+        const matchedPrecedent = applicablePrecedents.length > 0 ? applicablePrecedents[0] : null;
+
         // Save to findings table
         vault.insertFinding(clientId, {
           id: findingId,
@@ -209,6 +217,8 @@ router.post(
           word_diff: fix.word_diff,
           intent_verified: fix.intent_verified,
           from_cache: isFindingFromCache,
+          precedent: matchedPrecedent,
+          applicable_precedents: applicablePrecedents,
           status: 'pending' as const
         };
       });
@@ -313,7 +323,7 @@ router.post(
   }
 );
 
-// Brand Case Law: Get precedents for a client or clause
+// Brand Case Law: Get precedents for a client or clause with layered filtering
 router.get(
   '/clients/:id/precedents',
   authenticateUser,
@@ -324,9 +334,13 @@ router.get(
       const clientId = req.params.id as string;
       const clauseId = req.query.clause_id as string | undefined;
       const snippet = req.query.snippet as string | undefined;
+      const channel = req.query.channel as string | undefined;
 
       if (clauseId && snippet) {
-        const matches = caseLaw.findApplicablePrecedents(clientId, clauseId, snippet);
+        const matches = caseLaw.findApplicablePrecedents(clientId, clauseId, snippet, {
+          channel,
+          includeExpired: req.query.include_expired === 'true'
+        });
         res.json({ precedents: matches });
       } else {
         const precedents = vault.getPrecedents(clientId, clauseId);
@@ -334,6 +348,23 @@ router.get(
       }
     } catch (error: any) {
       res.status(500).json({ error: 'PrecedentError', message: 'Failed to retrieve precedents.' });
+    }
+  }
+);
+
+// Brand Case Law: Get conflicting precedents across clauses
+router.get(
+  '/clients/:id/precedents/conflicts',
+  authenticateUser,
+  validateParams(ClientIdParamSchema),
+  requireClientVault,
+  (req: Request, res: Response) => {
+    try {
+      const clientId = req.params.id as string;
+      const conflicts = caseLaw.detectConflictingPrecedents(clientId);
+      res.json({ conflicts });
+    } catch (error: any) {
+      res.status(500).json({ error: 'PrecedentConflictError', message: 'Failed to retrieve conflicting precedents.' });
     }
   }
 );

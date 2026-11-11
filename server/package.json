@@ -11,7 +11,8 @@
     "test": "vitest",
     "test:run": "vitest run --fileParallelism=false",
     "seed:sample": "tsx src/scripts/seedSampleData.ts",
-    "eval": "tsx src/scripts/evaluate.ts"
+    "eval": "tsx src/scripts/evaluate.ts",
+    "eval:precedents": "tsx src/scripts/evaluatePrecedents.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

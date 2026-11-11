@@ -10,7 +10,15 @@ let dbInstance: DatabaseSync | null = null;
 
 export function getDatabase(dbPath?: string): DatabaseSync {
   if (!dbInstance) {
-    const resolvedPath = dbPath || process.env.DATABASE_URL || path.resolve(process.cwd(), 'parakh.db');
+    let resolvedPath = dbPath || process.env.DATABASE_URL;
+    if (!resolvedPath) {
+      const candidates = [
+        path.resolve(process.cwd(), 'parakh.db'),
+        path.resolve(process.cwd(), 'server/parakh.db'),
+        path.resolve(__dirname, '../../parakh.db')
+      ];
+      resolvedPath = candidates.find(p => fs.existsSync(p)) || candidates[0];
+    }
     dbInstance = new DatabaseSync(resolvedPath);
     dbInstance.exec('PRAGMA journal_mode = WAL;');
     dbInstance.exec('PRAGMA busy_timeout = 5000;');

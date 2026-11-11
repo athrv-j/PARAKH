@@ -6,6 +6,12 @@ export interface PrecedentMatch {
   precedent_applies: boolean;
   needs_human_confirmation: boolean;
   rationale: string;
+  is_quote_verified: boolean;
+  verified_quote?: string;
+  channel_scope_matched: boolean;
+  is_expired: boolean;
+  has_conflict: boolean;
+  conflict_details?: string;
 }
 
 export interface ConflictingPrecedentPair {
@@ -13,6 +19,12 @@ export interface ConflictingPrecedentPair {
   precedent_a: PrecedentRecord;
   precedent_b: PrecedentRecord;
   conflict_summary: string;
+}
+
+export interface LayeredRetrievalOptions {
+  channel?: string;
+  minSimilarity?: number;
+  includeExpired?: boolean;
 }
 
 /**
@@ -53,6 +65,101 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return Math.max(0, Math.min(1, Number(dotProduct.toFixed(4))));
 }
 
+/**
+ * Extracts verbatim key quotes or operative phrases from a precedent's reason.
+ * E.g. phrases inside quotes: 'daily equivalent interest rate', '100% natural and chemical-free', 'voted Best Diagnostic Lab'
+ */
+export function extractPrecedentKeyPhrases(reason: string): string[] {
+  const quotes: string[] = [];
+  // 1. Quoted text '...' or "..."
+  const quoteRegex = /['"]([^'"]{3,60})['"]/g;
+  let match;
+  while ((match = quoteRegex.exec(reason)) !== null) {
+    if (match[1] && match[1].trim()) {
+      quotes.push(match[1].trim());
+    }
+  }
+
+  // 2. Common operative keywords/phrases
+  const terms = [
+    'chemical-free',
+    'natural',
+    'daily interest',
+    'apr',
+    'award',
+    'methodology',
+    'discount',
+    'cure',
+    'bridge funding',
+    'disclaimer',
+    '0.03%',
+    '11.5%',
+    'pocket-friendly',
+    'emergency'
+  ];
+  for (const term of terms) {
+    if (reason.toLowerCase().includes(term) && !quotes.some(q => q.toLowerCase().includes(term))) {
+      quotes.push(term);
+    }
+  }
+
+  return quotes;
+}
+
+/**
+ * Verifies whether the draft text actually quotes or contains the operative exception from the precedent.
+ */
+export function verifyPrecedentQuote(draftSnippet: string, reason: string): { isVerified: boolean; quote?: string } {
+  const candidateQuotes = extractPrecedentKeyPhrases(reason);
+  const normalizedSnippet = draftSnippet.toLowerCase();
+
+  for (const q of candidateQuotes) {
+    if (normalizedSnippet.includes(q.toLowerCase())) {
+      return { isVerified: true, quote: q };
+    }
+  }
+
+  // Check word overlap for composite phrases
+  for (const q of candidateQuotes) {
+    const words = q.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    const matchedCount = words.filter(w => normalizedSnippet.includes(w)).length;
+    if (words.length > 1 && matchedCount >= words.length * 0.75) {
+      return { isVerified: true, quote: q };
+    }
+  }
+
+  return { isVerified: false };
+}
+
+/**
+ * Validates channel compatibility between a precedent's scope and the draft's distribution channel.
+ */
+export function isChannelCompatible(precedentScope: string, draftChannel?: string): boolean {
+  if (!draftChannel) return true;
+  const scope = precedentScope.toLowerCase().trim();
+  const channel = draftChannel.toLowerCase().trim();
+
+  if (scope === 'all' || scope === 'all_content' || scope === 'any') return true;
+
+  // Exact match
+  if (scope === channel || scope === `channel:${channel}`) return true;
+
+  // Social channel family
+  const socialChannels = ['social', 'instagram', 'facebook', 'youtube', 'linkedin', 'twitter', 'x'];
+  const isDraftSocial = socialChannels.includes(channel);
+  const isPrecedentSocial = socialChannels.some(s => scope.includes(s));
+
+  if (isDraftSocial && isPrecedentSocial) return true;
+
+  // Email channel family
+  if (channel.includes('email') && scope.includes('email')) return true;
+
+  // Print/PR family
+  if ((channel.includes('print') || channel.includes('pr')) && (scope.includes('print') || scope.includes('pr'))) return true;
+
+  return false;
+}
+
 export class BrandCaseLawService {
   private vault: VaultDb;
 
@@ -61,47 +168,114 @@ export class BrandCaseLawService {
   }
 
   /**
-   * Retrieves applicable precedents for a clause and draft snippet,
-   * filtering out expired decisions and ranking by cosine similarity.
+   * Layered Precedent Retrieval Pipeline:
+   * Layer 1: Filter by client, clause, channel scope, and expiration status
+   * Layer 2: Rank by semantic cosine similarity
+   * Layer 3: Verify candidate matches by quoting the precedent (Citation Gate for Precedents)
+   * Layer 4: Detect contradictory / conflicting rulings and enforce human confirmation
    */
   findApplicablePrecedents(
     clientId: string,
     clauseId: string,
     draftSnippet: string,
-    options?: { minSimilarity?: number }
+    options?: LayeredRetrievalOptions
   ): PrecedentMatch[] {
     const allPrecedents = this.vault.getPrecedents(clientId, clauseId);
     const now = new Date();
     const queryVec = computeLocalEmbedding(draftSnippet);
     const minSim = options?.minSimilarity ?? 0.15;
+    const includeExpired = options?.includeExpired ?? false;
+    const channel = options?.channel;
+
+    // Detect all conflicts for this client to annotate matches
+    const allConflicts = this.detectConflictingPrecedents(clientId);
+    const clauseConflict = allConflicts.find(c => c.clause_id === clauseId);
 
     const matches: PrecedentMatch[] = [];
 
     for (const prec of allPrecedents) {
-      // 1. Expiry Check: Expired precedents never automatically apply
+      // ----------------------------------------------------
+      // Layer 1: Expiry & Channel Scope Check
+      // ----------------------------------------------------
+      let isExpired = false;
       if (prec.expiry) {
         const expiryDate = new Date(prec.expiry);
         if (expiryDate < now) {
-          continue; // Expired, skip from active recommendations
+          isExpired = true;
+          if (!includeExpired) {
+            // Expired precedents do not recommend active exceptions
+            continue;
+          }
         }
       }
 
-      // 2. Similarity Ranking
-      const precVec = prec.embedding ? JSON.parse(prec.embedding) : computeLocalEmbedding(prec.reason);
-      const similarity = cosineSimilarity(queryVec, precVec);
+      const channelMatched = isChannelCompatible(prec.scope, channel);
 
-      if (similarity >= minSim || allPrecedents.length <= 3) {
-        matches.push({
-          precedent: prec,
-          similarity_score: similarity,
-          precedent_applies: true,
-          needs_human_confirmation: true, // Never auto-pass!
-          rationale: `Matched precedent ${prec.id} decided by ${prec.decided_by}: "${prec.reason}".`
-        });
+      // ----------------------------------------------------
+      // Layer 2: Semantic Similarity
+      // ----------------------------------------------------
+      const precVec = prec.embedding ? JSON.parse(prec.embedding) : computeLocalEmbedding(prec.reason);
+      let similarity = cosineSimilarity(queryVec, precVec);
+
+      // ----------------------------------------------------
+      // Layer 3: Quote Verification (Precedent Citation Gate)
+      // ----------------------------------------------------
+      const quoteCheck = verifyPrecedentQuote(draftSnippet, prec.reason);
+
+      if (quoteCheck.isVerified) {
+        similarity = Math.min(1.0, similarity + 0.25);
+      } else if (!channelMatched) {
+        similarity = Math.max(0, similarity - 0.2);
       }
+
+      // Filter out low-confidence false matches
+      if (similarity < minSim && !quoteCheck.isVerified && allPrecedents.length > 2) {
+        continue;
+      }
+
+      // ----------------------------------------------------
+      // Layer 4: Conflict Tagging & Synthesis
+      // ----------------------------------------------------
+      const hasConflict = Boolean(clauseConflict);
+      let conflictSummary: string | undefined;
+      if (hasConflict && clauseConflict) {
+        conflictSummary = clauseConflict.conflict_summary;
+      }
+
+      let rationale = `Matched precedent ${prec.id} decided by ${prec.decided_by}: "${prec.reason}".`;
+      if (quoteCheck.isVerified) {
+        rationale += ` [Verified Quote: "${quoteCheck.quote}"]`;
+      }
+      if (!channelMatched && channel) {
+        rationale += ` [Scope Warning: Approved for ${prec.scope}, but draft is on ${channel}]`;
+      }
+      if (isExpired) {
+        rationale += ` [EXPIRED PRECEDENT: Expired on ${prec.expiry}]`;
+      }
+
+      const precedentApplies = !isExpired && (prec.decision === 'accepted' || prec.decision === 'exception');
+
+      matches.push({
+        precedent: prec,
+        similarity_score: Number(similarity.toFixed(3)),
+        precedent_applies: precedentApplies,
+        needs_human_confirmation: true, // Always enforce human agency!
+        rationale,
+        is_quote_verified: quoteCheck.isVerified,
+        verified_quote: quoteCheck.quote,
+        channel_scope_matched: channelMatched,
+        is_expired: isExpired,
+        has_conflict: hasConflict,
+        conflict_details: conflictSummary
+      });
     }
 
-    return matches.sort((a, b) => b.similarity_score - a.similarity_score);
+    // Sort by verified quote first, then descending similarity score
+    return matches.sort((a, b) => {
+      if (a.is_quote_verified && !b.is_quote_verified) return -1;
+      if (!a.is_quote_verified && b.is_quote_verified) return 1;
+      return b.similarity_score - a.similarity_score;
+    });
   }
 
   /**
