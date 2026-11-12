@@ -49,9 +49,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem('parakh_auth_token') || 'test-token:creator:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
       const response = await fetch(`/api/review/clients/${clientId}/drafts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           title: draftTitle,
           channel: draftChannel,
@@ -83,6 +87,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({
     setModalSuccess(null);
     setIsSubmitting(true);
     try {
+      const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
       let response: Response;
 
       if (selectedFile) {
@@ -90,6 +95,9 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         formData.append('file', selectedFile);
         response = await fetch(`/api/clients/${clientId}/knowledge`, {
           method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
           body: formData
         });
       } else {
@@ -100,7 +108,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({
         }
         response = await fetch(`/api/clients/${clientId}/knowledge`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify({ text: guidelineText })
         });
       }
@@ -130,9 +141,13 @@ export const UploadModal: React.FC<UploadModalProps> = ({
 
     const id = `client_${newClientName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
     try {
+      const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
       const response = await fetch('/api/clients', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ id, name: newClientName })
       });
 

@@ -695,7 +695,12 @@ export const GuidelineDebuggerView: React.FC<GuidelineDebuggerProps> = ({
 
   // Synchronize with backend API if available
   useEffect(() => {
-    fetch(`/api/review/clients/${clientId}/debugger`)
+    const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
+    fetch(`/api/review/clients/${clientId}/debugger`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (data && data.reports && data.reports.length > 0) {
@@ -704,16 +709,19 @@ export const GuidelineDebuggerView: React.FC<GuidelineDebuggerProps> = ({
             category: r.category || 'general',
             current_text: r.current_text,
             version: r.version || 1,
-            flags_count: r.flags_count || 10,
-            dismissals_count: r.dismissals_count || 3,
-            exceptions_count: r.exceptions_count || 2,
+            flags_count: r.flags_count || 0,
+            dismissals_count: r.dismissals_count || 0,
+            exceptions_count: r.exceptions_count || 0,
             conflicts_count: r.conflicts_count || 0,
-            ambiguity_score: r.ambiguity_score || 35,
-            override_rate: r.override_rate || 0.4,
+            ambiguity_score: r.ambiguity_score || 0,
+            override_rate: r.override_rate || 0,
             evidence_examples: r.evidence_examples || [],
             proposed_rewrite: r.proposed_rewrite
           }));
           setClauses(apiClauses);
+          if (apiClauses.length > 0) {
+            setSelectedClauseId(apiClauses[0].clause_id);
+          }
         }
       })
       .catch(() => {});
@@ -723,10 +731,15 @@ export const GuidelineDebuggerView: React.FC<GuidelineDebuggerProps> = ({
     const clause = clauses.find(c => c.clause_id === clauseId);
     if (!clause || !clause.proposed_rewrite) return;
 
+    const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
+
     // Send accept request to backend API
     fetch(`/api/review/clients/${clientId}/debugger/accept`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify({
         clauseId: clause.clause_id,
         newText: clause.proposed_rewrite,

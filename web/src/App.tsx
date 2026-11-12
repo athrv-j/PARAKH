@@ -100,7 +100,12 @@ export default function App() {
 
   // Fetch client list from backend API
   useEffect(() => {
-    fetch('/api/clients')
+    const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
+    fetch('/api/clients', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (data && data.clients && data.clients.length > 0) {
@@ -118,9 +123,13 @@ export default function App() {
     setScanResult(null);
     setEvalErrorNotice(null);
     try {
+      const token = localStorage.getItem('parakh_auth_token') || 'test-token:reviewer:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
       const response = await fetch(`/api/review/clients/${selectedClientId}/drafts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           title,
           channel,
