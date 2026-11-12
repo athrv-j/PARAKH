@@ -1,5 +1,85 @@
 import React, { useState } from 'react';
 
+const SAMPLE_GUIDELINE_PRESETS = [
+  {
+    key: 'kavach',
+    title: '🛡️ Kavach Health',
+    subtitle: 'Diagnostic & Preventive Healthcare',
+    text: `# Kavach Health (कवच) — Official Brand Governance Guidelines
+## 1. Tone & Brand Voice
+Clause C-1.1: Kavach Health must communicate with calm, empathetic, and evidence-backed phrasing. Never use fear-mongering or alarmist headlines.
+Clause C-1.2: Avoid aggressive sales hyperbole such as 'BUY NOW OR REGRET' or excessive exclamation marks. Maximum one exclamation mark per copy.
+Clause C-1.3: Honor local cultural sensitivities and regional festivals with sincere reverence, never using festivals merely as flash-sale gimmicks.
+Clause C-1.4: Address customers respectfully in the second person ('you', 'your family'). Use humble, transparent vocabulary.
+
+## 2. Terminology & Vocabulary Controls
+Banned: miracle cure -> scientifically studied
+Banned: cheap rates -> cost-effective diagnostic packages
+Banned: 100% risk-free -> clinically verified
+Preferred: physician consultation
+Preferred: NABL-accredited laboratory
+
+## 3. Claims & Substantiation Standards
+Clause C-3.1: Any statistical claim must reference an active, approved fact in the fact registry.
+Clause C-3.2: Price figures and promotional package fees must strictly match valid promotional facts.
+Fact: Basic Health Checkup Price = ₹499
+Fact: Monsoon Dengue Package Price = ₹199
+Fact: Diagnostic Report Turnaround = 6 hours (standard conditions)
+
+## 4. Visual Identity & Inclusivity
+Clause C-4.1: Brand colors must maintain WCAG AA contrast ratio of at least 4.5:1. Primary Navy: #0B1D3A, Crimson Seal: #D7263D.
+Clause C-4.2: Hero creative imagery must reflect genuine Indian families and working professionals.`
+  },
+  {
+    key: 'vyapar',
+    title: '💼 VyaparSetu',
+    subtitle: 'MSME Fintech & Credit Line',
+    text: `# VyaparSetu Fintech (व्यापार सेतु) — Brand Governance Guidelines
+## 1. Tone & Brand Voice
+Clause C-1.1: VyaparSetu Fintech must speak with the clarity, dignity, and partnership tone of a trusted financial institution. Never demean small merchants.
+Clause C-1.2: Avoid aggressive loan-shark urgency such as 'GET CASH OR SHUT DOWN' or frantic count-down clocks.
+Clause C-1.3: All interest rate quotes must highlight fairness, transparency, and statutory borrower protections.
+
+## 2. Terminology & Vocabulary Controls
+Banned: instant cash no kyc -> fast digital onboarding
+Banned: foolproof loan -> collateral-free credit line
+Banned: dirt cheap interest -> competitive annual percentage rate
+Preferred: RBI-registered NBFC partners
+Preferred: working capital credit
+
+## 3. Claims & Substantiation Standards
+Clause C-3.1: The phrase 'collateral-free' must always be accompanied by the statutory caveat 'subject to partner NBFC credit appraisal'.
+Clause C-3.2: Loan approval turnaround metrics must reflect median disbursement times.
+Fact: Working Capital Interest Rate = 1.25% per month
+Fact: Max Credit Limit = ₹25,00,000
+Fact: In-Principle Approval Time = 15 minutes`
+  },
+  {
+    key: 'mitti',
+    title: '🌿 Mitti & Moon',
+    subtitle: 'Ayurvedic Botanicals & Skincare',
+    text: `# Mitti & Moon Botanical (मिट्टी & मून) — Brand Governance Guidelines
+## 1. Tone & Brand Voice
+Clause C-1.1: Mitti & Moon communicates with poetic, sensorial, and grounded botanical reverence. Never use clinical aggression.
+Clause C-1.2: Honor ancient Ayurvedic traditions and local artisan growers with humility and authenticity.
+Clause C-1.3: Promote holistic skin wellness and nourishment rather than toxic aesthetic perfection or age anxiety.
+
+## 2. Terminology & Vocabulary Controls
+Banned: miracle cure -> natural botanical formulation
+Banned: fair skin -> natural radiant glow
+Banned: chemical-free -> 100% plant-derived & preservative-safe
+Preferred: Grade A1 GI-Tagged Kashmiri Saffron
+Preferred: cold-pressed virgin oils
+
+## 3. Claims & Substantiation Standards
+Clause C-3.1: Saffron sourcing claims must only refer to authenticated Kashmiri cooperative farmer batches.
+Clause C-3.2: Botanical percentages must adhere strictly to ISO 16128 natural origin index standards.
+Fact: Kumkumadi Saffron Purity = 100% Grade A1 Kashmiri
+Fact: Night Elixir Price = ₹1,299
+Fact: Cold-Pressed Almond Oil Percentage = 35%`
+  }
+];
+
 interface UploadModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -438,8 +518,44 @@ export const UploadModal: React.FC<UploadModalProps> = ({
               </label>
             </div>
 
+            {/* QUICK-FILL BRAND HANDBOOKS & ON-DISK FILE HINT */}
+            <div style={{ backgroundColor: '#F8F6F0', border: '1px solid #D1C7BD', borderRadius: 'var(--radius-sm)', padding: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-stamp-red)' }}>
+                  ⚡ Quick-Fill Verified Brand Handbook:
+                </span>
+                <span style={{ fontSize: '0.7rem', color: '#666', fontFamily: 'var(--font-mono)' }}>
+                  Docs on disk: <strong>SAMPLE_GUIDELINES_TO_UPLOAD/</strong>
+                </span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                {SAMPLE_GUIDELINE_PRESETS.map(preset => (
+                  <button
+                    key={preset.key}
+                    type="button"
+                    onClick={() => {
+                      setSelectedFile(null);
+                      setGuidelineText(preset.text);
+                    }}
+                    style={{
+                      padding: '0.55rem 0.65rem',
+                      borderRadius: '4px',
+                      border: guidelineText === preset.text ? '1.5px solid var(--color-stamp-red)' : '1px solid #C8C2B6',
+                      backgroundColor: guidelineText === preset.text ? 'rgba(215, 38, 61, 0.08)' : '#FFFFFF',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease'
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--color-ink)' }}>{preset.title}</div>
+                    <div style={{ fontSize: '0.68rem', color: '#666', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{preset.subtitle}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div style={{ textAlign: 'center', fontWeight: 700, color: '#888', fontSize: '0.8rem' }}>
-              — OR PASTE GUIDELINE TEXT BELOW —
+              — OR EDIT / PASTE CUSTOM GUIDELINE TEXT BELOW —
             </div>
 
             <textarea

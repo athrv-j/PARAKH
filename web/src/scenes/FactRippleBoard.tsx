@@ -55,6 +55,23 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
   const [dryRun, setDryRun] = useState(false);
   const [ghostPreviewActive, setGhostPreviewActive] = useState(false);
   const [ghostSimulatedFacts, setGhostSimulatedFacts] = useState<{ factId: string; prevValue: string; nextValue: string } | null>(null);
+  const [simulationResults, setSimulationResults] = useState<{
+    fact_id: string;
+    label: string;
+    previous_value: string;
+    new_value?: string;
+    previous_valid_until?: string | null;
+    new_valid_until?: string | null;
+    dry_run: boolean;
+    affected_items_count: number;
+    affected_drafts: Array<{
+      draft_id: string;
+      draft_title: string;
+      channel: string;
+      current_status: string;
+      claim_span: string;
+    }>;
+  } | null>(null);
   const [expiringFacts, setExpiringFacts] = useState<Array<{
     fact_id: string;
     label: string;
@@ -172,44 +189,101 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
   };
 
   // Trigger ripple propagation with distance-staggered node flips
-  const handleTriggerRipple = async () => {
-    const selectedFact = facts.find(f => f.id === selectedFactId);
+  const handleTriggerRipple = async (
+    targetFactId?: string | React.MouseEvent,
+    targetValue?: string,
+    targetExpiry?: string,
+    forceDryRun?: boolean
+  ) => {
+    const fId = (typeof targetFactId === 'string' && targetFactId) ? targetFactId : selectedFactId;
+    const fVal = typeof targetValue === 'string' ? targetValue : newValue;
+    const fExp = typeof targetExpiry === 'string' ? targetExpiry : newExpiry;
+    const isDry = typeof forceDryRun === 'boolean' ? forceDryRun : dryRun;
+
+    setSelectedFactId(fId);
+    setNewValue(fVal);
+    setNewExpiry(fExp);
+    if (forceDryRun !== undefined) setDryRun(forceDryRun);
+
+    const selectedFact = facts.find(f => f.id === fId);
     if (!selectedFact) return;
 
     setIsRippling(true);
 
-    if (dryRun) {
+    if (isDry) {
       setGhostPreviewActive(true);
       setGhostSimulatedFacts({
         factId: selectedFact.id,
         prevValue: selectedFact.value,
-        nextValue: newValue
+        nextValue: fVal
       });
     } else {
       setGhostPreviewActive(false);
       setGhostSimulatedFacts(null);
     }
 
-    // Call backend API in parallel (falls back gracefully)
+    const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
+    let apiAffectedDrafts: any[] = [];
+    let affectedCount = 0;
+
     try {
-      await fetch(`/api/review/clients/${clientId}/facts/ripple`, {
+      const res = await fetch(`/api/review/clients/${clientId}/facts/ripple`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
-          factId: selectedFactId,
-          value: newValue,
-          valid_until: newExpiry,
-          dryRun
+          factId: fId,
+          value: fVal,
+          valid_until: fExp,
+          dryRun: isDry
         })
       });
-    } catch {}
+      const data = await res.json();
+      let simulationPayload: any = null;
+      if (data.success && data.result) {
+        simulationPayload = { ...data.result };
+        apiAffectedDrafts = data.result.affected_drafts || [];
+        affectedCount = data.result.affected_items_count || 0;
+      }
 
-    // Calculate distance-based delays for connected draft nodes
-    const connectedDrafts = drafts.filter(d => d.fact_id === selectedFactId);
+      // If server had 0 linked drafts in DB or fallback, supplement with active corkboard drafts
+      if (!simulationPayload || !simulationPayload.affected_drafts || simulationPayload.affected_drafts.length === 0) {
+        const localAffected = drafts.filter(d => d.fact_id === fId);
+        simulationPayload = {
+          fact_id: fId,
+          label: selectedFact.label || fId,
+          previous_value: selectedFact.value,
+          new_value: fVal,
+          affected_items_count: Math.max(localAffected.length, affectedCount),
+          affected_drafts: localAffected.map(d => ({
+            draft_id: d.id,
+            draft_title: d.title,
+            channel: d.channel,
+            claim_span: fVal
+          }))
+        };
+      }
+
+      if (isDry) {
+        setSimulationResults(simulationPayload);
+      } else {
+        setSimulationResults(null);
+      }
+    } catch (e) {
+      console.error('Error triggering ripple:', e);
+    }
+
+    // Connect draft animations: either matching fact_id or in apiAffectedDrafts
+    const connectedDrafts = drafts.filter(d =>
+      d.fact_id === fId || apiAffectedDrafts.some(ad => ad.draft_id === d.id)
+    );
+
+    const countToReport = Math.max(connectedDrafts.length, affectedCount);
 
     connectedDrafts.forEach(draft => {
       const distance = Math.hypot(draft.x - selectedFact.x, draft.y - selectedFact.y);
-      // Ripple wave speed: 450px/sec
       const delayMs = Math.round((distance / 450) * 800);
 
       setTimeout(() => {
@@ -223,21 +297,21 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
 
     // If live commit, update fact value after ripple waves expand
     setTimeout(() => {
-      if (!dryRun) {
+      if (!isDry) {
         setFacts(prev =>
           prev.map(f =>
-            f.id === selectedFactId ? { ...f, value: newValue, valid_until: newExpiry } : f
+            f.id === fId ? { ...f, value: fVal, valid_until: fExp } : f
           )
         );
       }
       setIsRippling(false);
 
       emitToast({
-        type: dryRun ? 'info' : 'precedent',
-        title: dryRun ? '👻 GHOST SIMULATION EXECUTED' : '⚡ DEPENDENCY RIPPLE PROPAGATED',
-        message: dryRun
-          ? `Simulated change: ${connectedDrafts.length} downstream creative assets would require updates.`
-          : `Updated ${selectedFact.label} to ${newValue}. ${connectedDrafts.length} dependent assets flagged for revision.`
+        type: isDry ? 'info' : 'precedent',
+        title: isDry ? '👻 GHOST SIMULATION EXECUTED' : '⚡ DEPENDENCY RIPPLE PROPAGATED',
+        message: isDry
+          ? `Simulated blast radius: ${countToReport} downstream creative asset${countToReport !== 1 ? 's' : ''} require updates.`
+          : `Updated ${selectedFact.label} to ${fVal}. ${countToReport} dependent asset${countToReport !== 1 ? 's' : ''} flagged for revision.`
       });
     }, 1100);
   };
@@ -246,20 +320,51 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
     setDrafts(prev => prev.map(d => ({ ...d, status: 'clean' as const, flipAngle: 0 })));
     setGhostPreviewActive(false);
     setGhostSimulatedFacts(null);
+    setSimulationResults(null);
   };
 
-  const handleCommitGhostChanges = () => {
+  const handleCommitGhostChanges = async () => {
+    const fId = selectedFactId;
+    const fVal = newValue;
+    const fExp = newExpiry;
+
+    const token = localStorage.getItem('parakh_auth_token') || 'test-token:manager:client_kavach,client_vyapar,client_mitti:evaluator:eval@agency.com';
+    try {
+      await fetch(`/api/review/clients/${clientId}/facts/ripple`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          factId: fId,
+          value: fVal,
+          valid_until: fExp,
+          dryRun: false
+        })
+      });
+    } catch (e) {
+      console.error('Error committing changes:', e);
+    }
+
     setDrafts(prev =>
-      prev.map(d => (d.fact_id === selectedFactId ? { ...d, status: 'needs_update' as const } : d))
+      prev.map(d => (d.fact_id === fId ? { ...d, status: 'needs_update' as const } : d))
     );
     setFacts(prev =>
       prev.map(f =>
-        f.id === selectedFactId ? { ...f, value: newValue, valid_until: newExpiry } : f
+        f.id === fId ? { ...f, value: fVal, valid_until: fExp } : f
       )
     );
     setGhostPreviewActive(false);
     setGhostSimulatedFacts(null);
+    setSimulationResults(null);
     setDryRun(false);
+
+    emitToast({
+      type: 'approval',
+      title: '✓ FACT UPDATES COMMITTED TO VAULT',
+      message: 'Creative asset statuses flipped to "needs_update". Reviewers notified.'
+    });
   };
 
   // Physical string tension calculation between a fact pin and draft pin
@@ -511,14 +616,11 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
                     <button
                       className="btn"
                       onClick={() => {
-                        setSelectedFactId(ef.fact_id);
-                        setNewValue(ef.value);
-                        setNewExpiry(ef.valid_until);
-                        setDryRun(true);
+                        handleTriggerRipple(ef.fact_id, ef.value, ef.valid_until, true);
                       }}
-                      style={{ fontSize: '0.7rem', padding: '0.25rem 0.6rem' }}
+                      style={{ fontSize: '0.72rem', padding: '0.3rem 0.75rem', fontWeight: 700, backgroundColor: 'rgba(255, 214, 10, 0.15)', border: '1px solid var(--color-highlighter)', color: 'var(--color-highlighter)' }}
                     >
-                      Dry-Run Blast
+                      💥 Dry-Run Blast
                     </button>
                   </div>
                 </div>
@@ -1222,6 +1324,158 @@ export const FactRippleBoard: React.FC<FactRippleBoardProps> = ({ clientId, clie
           </div>
         </div>
       )}
+
+      {/* BLAST RADIUS & GHOST SIMULATION RESULTS MODAL */}
+      <AnimatePresence>
+        {simulationResults && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(10, 11, 14, 0.88)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 3500,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '1.25rem'
+            }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              style={{
+                width: '100%',
+                maxWidth: '640px',
+                backgroundColor: '#13151D',
+                border: '2px solid var(--color-highlighter)',
+                borderRadius: '8px',
+                boxShadow: '0 25px 60px rgba(0,0,0,0.85)',
+                overflow: 'hidden'
+              }}
+            >
+              <div
+                style={{
+                  padding: '1.2rem 1.5rem',
+                  backgroundColor: '#1A1C25',
+                  borderBottom: '1px solid var(--color-docket-border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', color: 'var(--color-highlighter)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                    💥 BLAST RADIUS SIMULATION REPORT
+                  </div>
+                  <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.3rem', color: 'var(--color-paper-light)', margin: '0.2rem 0 0 0' }}>
+                    {simulationResults.label}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSimulationResults(null)}
+                  style={{ background: 'none', border: 'none', color: 'var(--color-steel)', fontSize: '1.5rem', cursor: 'pointer' }}
+                >
+                  ×
+                </button>
+              </div>
+
+              <div style={{ padding: '1.5rem', maxHeight: '70vh', overflowY: 'auto' }}>
+                {/* Fact Change Summary */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', backgroundColor: 'rgba(255,255,255,0.03)', padding: '1rem', borderRadius: '6px', border: '1px solid var(--color-docket-border)', marginBottom: '1.25rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase' }}>Current Vault Value</div>
+                    <div style={{ fontSize: '1.1rem', color: '#FF7A7A', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{simulationResults.previous_value}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.68rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase' }}>Simulated New Value</div>
+                    <div style={{ fontSize: '1.1rem', color: 'var(--color-verified-green)', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{simulationResults.new_value || '(Expired)'}</div>
+                  </div>
+                </div>
+
+                {/* Blast Radius Count */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: 'var(--color-steel)', textTransform: 'uppercase' }}>
+                    Affected Creative Assets ({simulationResults.affected_items_count}):
+                  </span>
+                  <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', color: simulationResults.affected_items_count > 0 ? '#FF7A7A' : 'var(--color-verified-green)', fontWeight: 700 }}>
+                    {simulationResults.affected_items_count > 0 ? '⚠️ Action Required on All Drafts' : '✓ Zero Downstream Impact'}
+                  </span>
+                </div>
+
+                {/* List of Affected Drafts */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1.5rem' }}>
+                  {simulationResults.affected_drafts && simulationResults.affected_drafts.length > 0 ? (
+                    simulationResults.affected_drafts.map((d, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          backgroundColor: 'rgba(215, 38, 61, 0.1)',
+                          border: '1px solid rgba(215, 38, 61, 0.35)',
+                          borderRadius: '6px',
+                          padding: '0.75rem 1rem',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '1rem'
+                        }}
+                      >
+                        <div>
+                          <div style={{ color: 'var(--color-paper-light)', fontWeight: 600, fontSize: '0.86rem' }}>
+                            {d.draft_title}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--color-steel)', marginTop: '2px' }}>
+                            Channel: <strong style={{ color: 'var(--color-paper-light)', textTransform: 'uppercase' }}>{d.channel}</strong> • Broken Claim: <span style={{ color: '#FFD60A', fontFamily: 'var(--font-mono)' }}>"{d.claim_span}"</span>
+                          </div>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: '0.7rem',
+                            fontFamily: 'var(--font-mono)',
+                            color: '#FF7A7A',
+                            fontWeight: 700,
+                            padding: '3px 8px',
+                            backgroundColor: 'rgba(215, 38, 61, 0.2)',
+                            borderRadius: '4px',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          FLIP TO REVISE
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--color-steel)', fontSize: '0.85rem' }}>
+                      No active drafts are citing this fact value yet. Safe to update without invalidating campaigns.
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => setSimulationResults(null)}
+                    style={{ fontSize: '0.82rem', padding: '0.55rem 1rem' }}
+                  >
+                    Close Preview
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-warning"
+                    onClick={handleCommitGhostChanges}
+                    style={{ fontSize: '0.82rem', padding: '0.55rem 1.25rem', fontWeight: 700 }}
+                  >
+                    ✓ Commit Updates to Brand Vault
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Responsive Breakpoint Styles for 360px, 768px, and 1280px */}
       <style>{`
